@@ -36,6 +36,7 @@ import { renderLightnessChart } from './chart.js';
 import { exportToFigmaJson, importFromFigmaJson, downloadJson } from './import-export.js';
 
 let resizeObserver = null;
+let sliderDragging = false;
 
 export function initUI() {
   subscribe(render);
@@ -109,7 +110,9 @@ function setupGlobalEvents() {
 function render(state) {
   renderPaletteCards(state);
   renderCenterPanel(state);
-  renderRightPanel(state);
+  if (!sliderDragging) {
+    renderRightPanel(state);
+  }
   document.getElementById('theme-select').value = state.theme;
   document.getElementById('collection-name').value = state.collectionName;
 }
@@ -346,19 +349,39 @@ function bindPropertyEvents(palette) {
   });
 
   // Color count (md-slider)
-  document.getElementById('color-count-range').addEventListener('input', (e) => {
+  const colorCountSlider = document.getElementById('color-count-range');
+  const colorCountInput = document.getElementById('color-count-input');
+  colorCountSlider.addEventListener('input', (e) => {
+    sliderDragging = true;
+    colorCountInput.value = e.target.value;
     updatePaletteColorCount(id, parseInt(e.target.value));
   });
-  document.getElementById('color-count-input').addEventListener('change', (e) => {
+  colorCountSlider.addEventListener('change', (e) => {
+    sliderDragging = false;
     updatePaletteColorCount(id, parseInt(e.target.value));
+  });
+  colorCountInput.addEventListener('change', (e) => {
+    const val = parseInt(e.target.value);
+    colorCountSlider.value = val;
+    updatePaletteColorCount(id, val);
   });
 
   // Lightness curve (md-slider)
-  document.getElementById('lightness-curve-range').addEventListener('input', (e) => {
+  const curveSlider = document.getElementById('lightness-curve-range');
+  const curveInput = document.getElementById('lightness-curve-input');
+  curveSlider.addEventListener('input', (e) => {
+    sliderDragging = true;
+    curveInput.value = e.target.value;
     updateLightnessCurve(id, parseInt(e.target.value) / 100);
   });
-  document.getElementById('lightness-curve-input').addEventListener('change', (e) => {
+  curveSlider.addEventListener('change', (e) => {
+    sliderDragging = false;
     updateLightnessCurve(id, parseInt(e.target.value) / 100);
+  });
+  curveInput.addEventListener('change', (e) => {
+    const val = parseInt(e.target.value);
+    curveSlider.value = val;
+    updateLightnessCurve(id, val / 100);
   });
 
   // Background colors
