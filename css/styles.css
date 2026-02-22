@@ -1,23 +1,23 @@
 /* ===== Material Design 3 Tokens ===== */
 :root,
 [data-theme="light"] {
-  /* Primary */
-  --md-sys-color-primary: #5b57d6;
+  /* Primary (Neutral) */
+  --md-sys-color-primary: #5e5e5e;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #e5deff;
-  --md-sys-color-on-primary-container: #180065;
+  --md-sys-color-primary-container: #e2e2e2;
+  --md-sys-color-on-primary-container: #1b1b1b;
 
-  /* Secondary */
-  --md-sys-color-secondary: #5f5c71;
+  /* Secondary (Neutral) */
+  --md-sys-color-secondary: #5e5e5e;
   --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #e5dff9;
-  --md-sys-color-on-secondary-container: #1c192b;
+  --md-sys-color-secondary-container: #e2e2e2;
+  --md-sys-color-on-secondary-container: #1b1b1b;
 
-  /* Tertiary */
-  --md-sys-color-tertiary: #7b5266;
+  /* Tertiary (Neutral) */
+  --md-sys-color-tertiary: #5e5e5e;
   --md-sys-color-on-tertiary: #ffffff;
-  --md-sys-color-tertiary-container: #ffd8e8;
-  --md-sys-color-on-tertiary-container: #301122;
+  --md-sys-color-tertiary-container: #e2e2e2;
+  --md-sys-color-on-tertiary-container: #1b1b1b;
 
   /* Error */
   --md-sys-color-error: #ba1a1a;
@@ -25,26 +25,26 @@
   --md-sys-color-error-container: #ffdad6;
   --md-sys-color-on-error-container: #410002;
 
-  /* Surface */
-  --md-sys-color-surface: #fdf8ff;
-  --md-sys-color-on-surface: #1c1b20;
-  --md-sys-color-on-surface-variant: #48454e;
-  --md-sys-color-surface-dim: #ddd8e0;
-  --md-sys-color-surface-bright: #fdf8ff;
+  /* Surface (Pure Neutral) */
+  --md-sys-color-surface: #fafafa;
+  --md-sys-color-on-surface: #1b1b1b;
+  --md-sys-color-on-surface-variant: #474747;
+  --md-sys-color-surface-dim: #dbdbdb;
+  --md-sys-color-surface-bright: #fafafa;
   --md-sys-color-surface-container-lowest: #ffffff;
-  --md-sys-color-surface-container-low: #f8f2fa;
-  --md-sys-color-surface-container: #f2ecf4;
-  --md-sys-color-surface-container-high: #ece6ee;
-  --md-sys-color-surface-container-highest: #e6e0e9;
+  --md-sys-color-surface-container-low: #f5f5f5;
+  --md-sys-color-surface-container: #efefef;
+  --md-sys-color-surface-container-high: #e9e9e9;
+  --md-sys-color-surface-container-highest: #e3e3e3;
 
   /* Outline */
-  --md-sys-color-outline: #79747e;
-  --md-sys-color-outline-variant: #cac4d0;
+  --md-sys-color-outline: #787878;
+  --md-sys-color-outline-variant: #c8c8c8;
 
   /* Inverse */
-  --md-sys-color-inverse-surface: #312f36;
-  --md-sys-color-inverse-on-surface: #f4eff7;
-  --md-sys-color-inverse-primary: #c9bfff;
+  --md-sys-color-inverse-surface: #303030;
+  --md-sys-color-inverse-on-surface: #f2f2f2;
+  --md-sys-color-inverse-primary: #c8c8c8;
 
   /* Success (custom) */
   --md-sys-color-success: #1b6d2f;
@@ -75,49 +75,77 @@
   /* MD component overrides */
   --md-sys-typescale-body-medium-font: 'Roboto', sans-serif;
   --md-sys-typescale-label-large-font: 'Roboto', sans-serif;
-  --md-filled-tonal-button-container-height: 32px;
-  --md-text-button-container-height: 36px;
+
+  /* Filled Tonal Button – M3 Size 2 (Medium) */
+  --md-filled-tonal-button-container-height: 40px;
+  --md-filled-tonal-button-container-shape: 20px;
+  --md-filled-tonal-button-leading-space: 24px;
+  --md-filled-tonal-button-trailing-space: 24px;
+  --md-filled-tonal-button-with-leading-icon-leading-space: 16px;
+  --md-filled-tonal-button-with-leading-icon-trailing-space: 24px;
+  --md-filled-tonal-button-icon-size: 18px;
+
+  /* Text Button – M3 Size 2 (Medium) */
+  --md-text-button-container-height: 40px;
+  --md-text-button-leading-space: 12px;
+  --md-text-button-trailing-space: 12px;
+  --md-text-button-with-leading-icon-leading-space: 12px;
+  --md-text-button-with-leading-icon-trailing-space: 16px;
+  --md-text-button-icon-size: 18px;
+
+  /* Icon Button – M3 Standard */
+  --md-icon-button-state-layer-height: 40px;
+  --md-icon-button-state-layer-width: 40px;
+  --md-icon-button-icon-size: 24px;
 }
 
 [data-theme="dark"] {
-  --md-sys-color-primary: #c9bfff;
-  --md-sys-color-on-primary: #2d2096;
-  --md-sys-color-primary-container: #4439ad;
-  --md-sys-color-on-primary-container: #e5deff;
+  /* Primary (Neutral) */
+  --md-sys-color-primary: #c8c8c8;
+  --md-sys-color-on-primary: #303030;
+  --md-sys-color-primary-container: #474747;
+  --md-sys-color-on-primary-container: #e3e3e3;
 
-  --md-sys-color-secondary: #c9c3dc;
-  --md-sys-color-on-secondary: #312e41;
-  --md-sys-color-secondary-container: #484459;
-  --md-sys-color-on-secondary-container: #e5dff9;
+  /* Secondary (Neutral) */
+  --md-sys-color-secondary: #c8c8c8;
+  --md-sys-color-on-secondary: #303030;
+  --md-sys-color-secondary-container: #474747;
+  --md-sys-color-on-secondary-container: #e3e3e3;
 
-  --md-sys-color-tertiary: #edb8ce;
-  --md-sys-color-on-tertiary: #482537;
-  --md-sys-color-tertiary-container: #623b4e;
-  --md-sys-color-on-tertiary-container: #ffd8e8;
+  /* Tertiary (Neutral) */
+  --md-sys-color-tertiary: #c8c8c8;
+  --md-sys-color-on-tertiary: #303030;
+  --md-sys-color-tertiary-container: #474747;
+  --md-sys-color-on-tertiary-container: #e3e3e3;
 
+  /* Error */
   --md-sys-color-error: #ffb4ab;
   --md-sys-color-on-error: #690005;
   --md-sys-color-error-container: #93000a;
   --md-sys-color-on-error-container: #ffdad6;
 
-  --md-sys-color-surface: #141318;
-  --md-sys-color-on-surface: #e6e0e9;
-  --md-sys-color-on-surface-variant: #cac4d0;
-  --md-sys-color-surface-dim: #141318;
-  --md-sys-color-surface-bright: #3b383e;
-  --md-sys-color-surface-container-lowest: #0f0d13;
-  --md-sys-color-surface-container-low: #1c1b20;
-  --md-sys-color-surface-container: #211f26;
-  --md-sys-color-surface-container-high: #2b2930;
-  --md-sys-color-surface-container-highest: #36343b;
+  /* Surface (Pure Neutral) */
+  --md-sys-color-surface: #131313;
+  --md-sys-color-on-surface: #e3e3e3;
+  --md-sys-color-on-surface-variant: #c8c8c8;
+  --md-sys-color-surface-dim: #131313;
+  --md-sys-color-surface-bright: #393939;
+  --md-sys-color-surface-container-lowest: #0e0e0e;
+  --md-sys-color-surface-container-low: #1b1b1b;
+  --md-sys-color-surface-container: #1f1f1f;
+  --md-sys-color-surface-container-high: #2a2a2a;
+  --md-sys-color-surface-container-highest: #353535;
 
-  --md-sys-color-outline: #938f99;
-  --md-sys-color-outline-variant: #48454e;
+  /* Outline */
+  --md-sys-color-outline: #919191;
+  --md-sys-color-outline-variant: #474747;
 
-  --md-sys-color-inverse-surface: #e6e0e9;
-  --md-sys-color-inverse-on-surface: #312f36;
-  --md-sys-color-inverse-primary: #5b57d6;
+  /* Inverse */
+  --md-sys-color-inverse-surface: #e3e3e3;
+  --md-sys-color-inverse-on-surface: #303030;
+  --md-sys-color-inverse-primary: #5e5e5e;
 
+  /* Success / Warning (custom) */
   --md-sys-color-success: #89d98d;
   --md-sys-color-success-container: #005319;
 
@@ -241,7 +269,7 @@ body {
   cursor: pointer;
   outline: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2379747e' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23787878' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
 }
@@ -303,7 +331,7 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 /* ===== 3-Column Layout ===== */
@@ -406,9 +434,20 @@ body {
 .card-delete-btn {
   display: none;
   --md-icon-button-icon-size: 18px;
-  --md-icon-button-state-layer-height: 28px;
-  --md-icon-button-state-layer-width: 28px;
+  --md-icon-button-state-layer-height: 32px;
+  --md-icon-button-state-layer-width: 32px;
   --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant);
+  /* 48dp touch target via pseudo-element */
+  position: relative;
+}
+
+.card-delete-btn::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .palette-card:hover .card-delete-btn {
@@ -676,8 +715,9 @@ body {
 .mode-tab {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 0 16px;
+  min-height: 40px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 20px;
   cursor: pointer;
@@ -730,19 +770,35 @@ body {
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   font-size: 0.875rem;
-  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
   border-radius: 50%;
   transition: all 150ms;
+  position: relative;
+}
+
+/* 48dp touch target */
+.mode-delete-btn::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .mode-delete-btn:hover {
   color: var(--md-sys-color-error);
+  background: var(--md-sys-color-error-container);
 }
 
 .mode-add-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -750,9 +806,20 @@ body {
   border-radius: 50%;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   cursor: pointer;
   transition: all 200ms;
+  position: relative;
+}
+
+/* 48dp touch target */
+.mode-add-btn::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .mode-add-btn:hover {
@@ -777,7 +844,8 @@ body {
 }
 
 .bg-toggle-btn {
-  padding: 4px 14px;
+  padding: 0 16px;
+  min-height: 40px;
   font-family: 'Roboto', sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
