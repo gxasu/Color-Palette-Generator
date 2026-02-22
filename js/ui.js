@@ -37,7 +37,7 @@ import {
 } from './color-utils.js';
 
 import { renderLightnessChart, makeChartInteractive } from './chart.js';
-import { exportToFigmaJson, exportAllModes, importFromFigmaJson, downloadJson } from './import-export.js';
+import { exportToFigmaJson, importFromFigmaJson, downloadJson } from './import-export.js';
 
 let resizeObserver = null;
 let chartCleanup = null;
@@ -85,10 +85,9 @@ function setupGlobalEvents() {
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const state = getState();
-    const results = exportAllModes(state.palettes, state.collectionName);
-    results.forEach(({ json, filename }) => {
-      downloadJson(json, filename);
-    });
+    const json = exportToFigmaJson(state.palettes);
+    const base = state.collectionName.replace(/\s+/g, '-').toLowerCase();
+    downloadJson(json, `${base}.json`);
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {

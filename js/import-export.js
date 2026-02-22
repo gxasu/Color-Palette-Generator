@@ -1,34 +1,59 @@
 // Figma JSON Import/Export – DTCG (Design Token Community Group) format
+// All modes are stored in a single file:
+//   $value = default mode, $extensions["com.figma.mode.<name>"] = additional modes
 import { hexToOklch } from './color-utils.js';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// Export palettes to Figma Variables JSON (DTCG) format for a single mode.
-export function exportToFigmaJson(palettes, modeName = 'Default') {
+function colorToComponents(color) {
+  const hex = color.hex.toUpperCase();
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const alpha = color.alpha !== undefined ? color.alpha : 1;
+
+  let hexStr = hex;
+  if (alpha < 1) {
+    const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, '0').toUpperCase();
+    hexStr = hex + alphaHex;
+  }
+
+  return { r, g, b, alpha, hexStr };
+}
+
+// Export all palettes with all modes into a single Figma DTCG JSON file.
+export function exportToFigmaJson(palettes) {
   const output = {};
 
-  palettes.forEach((palette) => {
-    const mode =
-      palette.modes.find((m) => m.name === modeName) || palette.modes[0];
-    const paletteObj = {};
-
-    const stepNames = palette.stepNames || [];
-    mode.colors.forEach((color, i) => {
-      const step = stepNames[i] || String((i + 1) * 100);
-      const hex = color.hex.toUpperCase();
-      const r = parseInt(hex.slice(1, 3), 16) / 255;
-      const g = parseInt(hex.slice(3, 5), 16) / 255;
-      const b = parseInt(hex.slice(5, 7), 16) / 255;
-      const alpha = color.alpha !== undefined ? color.alpha : 1;
-
-      // Build hex string (include alpha if < 1)
-      let hexStr = hex;
-      if (alpha < 1) {
-        const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, '0').toUpperCase();
-        hexStr = hex + alphaHex;
+  // Collect all unique mode names (first mode = default)
+  const allModeNames = [];
+  const modeNameSet = new Set();
+  palettes.forEach((p) => {
+    p.modes.forEach((m) => {
+      if (!modeNameSet.has(m.name)) {
+        modeNameSet.add(m.name);
+        allModeNames.push(m.name);
       }
+    });
+  });
+
+  const defaultModeName = allModeNames[0] || 'Default';
+  const additionalModeNames = allModeNames.slice(1);
+
+  palettes.forEach((palette) => {
+    const paletteObj = {};
+    const stepNames = palette.stepNames || [];
+
+    // Get colors for the default mode
+    const defaultMode =
+      palette.modes.find((m) => m.name === defaultModeName) || palette.modes[0];
+    const defaultColors = defaultMode ? defaultMode.colors : [];
+
+    defaultColors.forEach((color, i) => {
+      const step = stepNames[i] || String((i + 1) * 100);
+      const { r, g, b, alpha, hexStr } = colorToComponents(color);
 
       const stepObj = {
         $type: 'color',
@@ -48,6 +73,23 @@ export function exportToFigmaJson(palettes, modeName = 'Default') {
         stepObj.$description = 'Base Color';
       }
 
+      // Add additional mode values into $extensions
+      additionalModeNames.forEach((modeName) => {
+        const mode = palette.modes.find((m) => m.name === modeName);
+        if (mode && mode.colors[i]) {
+          const mc = mode.colors[i];
+          const { r: mr, g: mg, b: mb, alpha: mAlpha, hexStr: mHexStr } =
+            colorToComponents(mc);
+
+          stepObj.$extensions[`com.figma.mode.${modeName}`] = {
+            colorSpace: 'srgb',
+            components: [mr, mg, mb],
+            alpha: mAlpha,
+            hex: mHexStr,
+          };
+        }
+      });
+
       paletteObj[step] = stepObj;
     });
 
@@ -55,51 +97,28 @@ export function exportToFigmaJson(palettes, modeName = 'Default') {
   });
 
   output.$extensions = {
-    'com.figma.modeName': modeName,
+    'com.figma.modeName': defaultModeName,
   };
 
   return JSON.stringify(output, null, 2);
 }
 
-// Export all modes – returns an array of { modeName, json, filename }
-export function exportAllModes(palettes, collectionName) {
-  const modeNames = new Set();
-  palettes.forEach((p) => {
-    p.modes.forEach((m) => modeNames.add(m.name));
-  });
-
-  const base = collectionName.replace(/\s+/g, '-').toLowerCase();
-  const results = [];
-
-  modeNames.forEach((modeName) => {
-    const json = exportToFigmaJson(palettes, modeName);
-    const safeName = modeName.replace(/\s+/g, '-').toLowerCase();
-    results.push({
-      modeName,
-      json,
-      filename: `${base}-${safeName}.json`,
-    });
-  });
-
-  return results;
-}
-
 // Import from Figma Variables JSON (DTCG) format.
+// Reads all modes: $value = default mode, $extensions["com.figma.mode.*"] = extra modes
 export function importFromFigmaJson(jsonString) {
   const data = JSON.parse(jsonString);
 
-  // Detect: DTCG format has palette-name keys with step sub-keys,
-  // while the old custom format has "variables" and "modes" arrays.
+  // Detect legacy format
   if (data.variables && data.modes) {
     return importLegacyFormat(data);
   }
 
-  const modeName =
+  const defaultModeName =
     data.$extensions?.['com.figma.modeName'] || 'Default';
   const palettes = [];
 
   Object.entries(data).forEach(([key, value]) => {
-    if (key.startsWith('$')) return; // skip $extensions etc.
+    if (key.startsWith('$')) return;
     if (typeof value !== 'object' || value === null) return;
 
     const steps = Object.entries(value)
@@ -108,50 +127,77 @@ export function importFromFigmaJson(jsonString) {
 
     if (steps.length === 0) return;
 
-    let baseColorIndex = Math.floor(steps.length / 2);
-    let hasAlpha = false;
-
-    const importedStepNames = steps.map(([stepKey]) => stepKey);
-    const colors = steps.map(([, stepData], i) => {
-      const hex = (stepData.$value?.hex || '#808080').slice(0, 7); // strip alpha hex
-      const oklch = hexToOklch(hex);
-      const alpha = stepData.$value?.alpha !== undefined ? stepData.$value.alpha : 1;
-
-      if (alpha < 1) hasAlpha = true;
-
-      if (stepData.$description === 'Base Color') {
-        baseColorIndex = i;
+    // Collect all mode names from extensions across all steps
+    const modeNameSet = new Set([defaultModeName]);
+    steps.forEach(([, stepData]) => {
+      if (stepData.$extensions) {
+        Object.keys(stepData.$extensions).forEach((k) => {
+          if (k.startsWith('com.figma.mode.')) {
+            modeNameSet.add(k.replace('com.figma.mode.', ''));
+          }
+        });
       }
-
-      return { ...oklch, hex, alpha };
     });
 
-    // Detect if this is an alpha palette (all same hex, varying alpha)
-    const allSameHex = colors.every((c) => c.hex.toUpperCase() === colors[0].hex.toUpperCase());
-    const paletteType = allSameHex && hasAlpha ? 'alpha' : 'oklch';
+    const importedStepNames = steps.map(([stepKey]) => stepKey);
+    let baseColorIndex = Math.floor(steps.length / 2);
+    let hasAlpha = false;
+    let firstHex = null;
+    let allSameHex = true;
 
-    const baseColor = colors[baseColorIndex]?.hex || '#808080';
-    const modeId = generateId();
+    // Build colors for each mode
+    const modes = [];
+
+    modeNameSet.forEach((modeName) => {
+      const colors = steps.map(([, stepData], i) => {
+        let colorValue;
+        if (modeName === defaultModeName) {
+          colorValue = stepData.$value;
+        } else {
+          colorValue =
+            stepData.$extensions?.[`com.figma.mode.${modeName}`] ||
+            stepData.$value;
+        }
+
+        const hex = (colorValue?.hex || '#808080').slice(0, 7);
+        const oklch = hexToOklch(hex);
+        const alpha =
+          colorValue?.alpha !== undefined ? colorValue.alpha : 1;
+
+        if (alpha < 1) hasAlpha = true;
+        if (firstHex === null) firstHex = hex.toUpperCase();
+        if (hex.toUpperCase() !== firstHex) allSameHex = false;
+
+        if (stepData.$description === 'Base Color') {
+          baseColorIndex = i;
+        }
+
+        return { ...oklch, hex, alpha };
+      });
+
+      modes.push({
+        id: generateId(),
+        name: modeName,
+        colors,
+      });
+    });
+
+    const paletteType = allSameHex && hasAlpha ? 'alpha' : 'oklch';
+    const baseColor = modes[0]?.colors[baseColorIndex]?.hex || '#808080';
 
     palettes.push({
       id: generateId(),
       name: key,
       paletteType,
       baseColor,
-      colorCount: colors.length,
+      colorCount: steps.length,
       stepNames: importedStepNames,
       lightnessCurve: paletteType === 'alpha' ? 0 : 0.3,
       lightBg: '#ffffff',
       darkBg: '#1a1a1a',
       baseColorIndex,
-      modes: [
-        {
-          id: modeId,
-          name: modeName,
-          colors,
-        },
-      ],
-      activeModeId: modeId,
+      modes,
+      activeModeId: modes[0]?.id,
     });
   });
 
