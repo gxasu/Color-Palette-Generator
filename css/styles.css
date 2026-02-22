@@ -283,7 +283,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 24px;
   background: var(--md-sys-color-surface-container);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
   height: 56px;
@@ -314,24 +314,70 @@ body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
 }
 
 .collection-name-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+}
+
+.collection-name-wrapper label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+  pointer-events: none;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  background: var(--md-sys-color-surface-container);
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.collection-name-wrapper .md-input:focus + label,
+.collection-name-wrapper .md-input:not(:placeholder-shown) + label,
+.collection-name-wrapper label.floated {
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-primary);
+  letter-spacing: 0.04em;
+}
+
+.collection-name-wrapper .md-input:not(:focus) + label.floated,
+.collection-name-wrapper .md-input:not(:focus):not(:placeholder-shown) + label {
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .collection-name-wrapper .md-input {
-  width: 140px;
-  font-size: 0.8125rem;
+  width: 180px;
+  font-size: 0.875rem;
+  padding: 10px 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-xs);
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  outline: none;
+  transition: border-color 200ms;
+}
+
+.collection-name-wrapper .md-input:hover {
+  border-color: var(--md-sys-color-on-surface);
+}
+
+.collection-name-wrapper .md-input:focus {
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
+  padding: 9px 11px;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 /* ===== 3-Column Layout ===== */
@@ -358,6 +404,7 @@ body {
   justify-content: space-between;
   padding: 12px 16px;
   flex-shrink: 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .palette-list {
@@ -1105,7 +1152,7 @@ md-divider {
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 0 12px;
+    padding: 0 16px;
     height: auto;
     min-height: 56px;
     flex-wrap: wrap;
@@ -1116,7 +1163,7 @@ md-divider {
 
   .header-right {
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
   }
 
   .collection-name-wrapper {
