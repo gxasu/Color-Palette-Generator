@@ -79,19 +79,7 @@
   /* Filled Tonal Button – M3 Size 2 (Medium) */
   --md-filled-tonal-button-container-height: 40px;
   --md-filled-tonal-button-container-shape: 20px;
-  --md-filled-tonal-button-leading-space: 24px;
-  --md-filled-tonal-button-trailing-space: 24px;
-  --md-filled-tonal-button-with-leading-icon-leading-space: 16px;
-  --md-filled-tonal-button-with-leading-icon-trailing-space: 24px;
   --md-filled-tonal-button-icon-size: 18px;
-
-  /* Text Button – M3 Size 2 (Medium) */
-  --md-text-button-container-height: 40px;
-  --md-text-button-leading-space: 16px;
-  --md-text-button-trailing-space: 16px;
-  --md-text-button-with-leading-icon-leading-space: 16px;
-  --md-text-button-with-leading-icon-trailing-space: 24px;
-  --md-text-button-icon-size: 18px;
 
   /* Icon Button – M3 Standard */
   --md-icon-button-state-layer-height: 40px;
@@ -155,6 +143,12 @@
   --md-sys-elevation-1: 0 1px 3px 1px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.6);
   --md-sys-elevation-2: 0 2px 6px 2px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.6);
   --md-sys-elevation-3: 0 4px 8px 3px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.6);
+}
+
+/* ===== MD Button padding override ===== */
+md-filled-tonal-button {
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 /* ===== Reset & Base ===== */
