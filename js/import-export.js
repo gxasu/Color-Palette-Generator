@@ -6,36 +6,45 @@ function generateId() {
 }
 
 // Export all palettes to Figma Variables JSON format
-export function exportToFigmaJson(palettes, collectionName = 'Color Palette') {
+export function exportToFigmaJson(palettes, collectionSlug = 'color-palette') {
   const collection = {
-    name: collectionName,
+    name: collectionSlug,
     modes: [],
     variables: [],
   };
 
-  // Collect all unique mode names across palettes
-  const allModeNames = new Set();
+  // Collect all unique mode slugs across palettes
+  const allModeSlugs = new Map();
   palettes.forEach((p) => {
-    p.modes.forEach((m) => allModeNames.add(m.name));
+    p.modes.forEach((m) => {
+      const slug = m.slug || m.name.toLowerCase().replace(/\s+/g, '-');
+      if (!allModeSlugs.has(slug)) {
+        allModeSlugs.set(slug, slug);
+      }
+    });
   });
 
-  collection.modes = Array.from(allModeNames).map((name) => ({
-    name,
-    modeId: name.toLowerCase().replace(/\s+/g, '-'),
+  collection.modes = Array.from(allModeSlugs.keys()).map((slug) => ({
+    name: slug,
+    modeId: slug,
   }));
 
   // Create variables for each palette color
   palettes.forEach((palette) => {
+    const paletteSlug = palette.slug || palette.name.toLowerCase().replace(/\s+/g, '-');
     palette.modes[0].colors.forEach((_, colorIndex) => {
       const step = (colorIndex + 1) * 100;
       const variable = {
-        name: `${palette.name}/${step}`,
+        name: `${paletteSlug}/${step}`,
         type: 'color',
         values: {},
       };
 
       collection.modes.forEach((mode) => {
-        const paletteMode = palette.modes.find((m) => m.name === mode.name);
+        const paletteMode = palette.modes.find((m) => {
+          const mSlug = m.slug || m.name.toLowerCase().replace(/\s+/g, '-');
+          return mSlug === mode.modeId;
+        });
         if (paletteMode && paletteMode.colors[colorIndex]) {
           const color = paletteMode.colors[colorIndex];
           const hex = color.hex;
@@ -134,7 +143,7 @@ export function importFromFigmaJson(jsonString) {
 
 // Download helper
 export function downloadJson(content, filename) {
-  const blob = new Blob([content], { type: 'application/json' });
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

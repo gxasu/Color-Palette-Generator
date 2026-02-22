@@ -87,10 +87,10 @@
 
   /* Text Button – M3 Size 2 (Medium) */
   --md-text-button-container-height: 40px;
-  --md-text-button-leading-space: 12px;
-  --md-text-button-trailing-space: 12px;
-  --md-text-button-with-leading-icon-leading-space: 12px;
-  --md-text-button-with-leading-icon-trailing-space: 16px;
+  --md-text-button-leading-space: 16px;
+  --md-text-button-trailing-space: 16px;
+  --md-text-button-with-leading-icon-leading-space: 16px;
+  --md-text-button-with-leading-icon-trailing-space: 24px;
   --md-text-button-icon-size: 18px;
 
   /* Icon Button – M3 Standard */
@@ -763,7 +763,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 16px;
+  padding: 6px 16px;
   min-height: 40px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 20px;
@@ -771,6 +771,12 @@ body {
   background: var(--md-sys-color-surface-container);
   transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
   font-size: 0.8125rem;
+}
+
+.mode-tab-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .mode-tab:hover {
@@ -809,6 +815,39 @@ body {
 
 .mode-name-input:focus {
   cursor: text;
+}
+
+.mode-slug-input {
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.625rem;
+  font-weight: 400;
+  width: 64px;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  opacity: 0.7;
+}
+
+.mode-slug-input:focus {
+  cursor: text;
+  opacity: 1;
+}
+
+.mode-tab.active .mode-slug-input {
+  color: var(--md-sys-color-on-primary);
+  opacity: 0.65;
+}
+
+.mode-tab.active .mode-slug-input:focus {
+  opacity: 1;
+}
+
+.slug-input {
+  width: 100%;
+  font-family: 'Roboto Mono', monospace;
 }
 
 .mode-delete-btn {
