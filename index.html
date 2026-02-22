@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OKLCH Color Palette Generator</title>
+  <title>OKLCH カラーパレットジェネレーター</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -18,36 +18,36 @@
           <line x1="2" y1="12" x2="6" y2="12" />
           <line x1="18" y1="12" x2="22" y2="12" />
         </svg>
-        OKLCH Palette
+        OKLCH パレット
       </h1>
     </div>
     <div class="header-right">
       <div class="collection-name-wrapper">
-        <label for="collection-name">Collection</label>
-        <input type="text" id="collection-name" value="Color Palette" class="collection-input" />
+        <label for="collection-name">コレクション</label>
+        <input type="text" id="collection-name" value="カラーパレット" class="collection-input" />
       </div>
       <div class="header-actions">
-        <button id="import-btn" class="btn btn-secondary" title="Import JSON">
+        <button id="import-btn" class="btn btn-secondary" title="JSONインポート">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Import
+          インポート
         </button>
         <input type="file" id="import-file" accept=".json" hidden />
-        <button id="export-btn" class="btn btn-secondary" title="Export JSON">
+        <button id="export-btn" class="btn btn-secondary" title="JSONエクスポート">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="17 8 12 3 7 8"/>
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          Export
+          エクスポート
         </button>
-        <select id="theme-select" class="theme-select" title="Theme">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-          <option value="system">System</option>
+        <select id="theme-select" class="theme-select" title="テーマ">
+          <option value="light">ライト</option>
+          <option value="dark">ダーク</option>
+          <option value="system">システム</option>
         </select>
       </div>
     </div>
@@ -56,13 +56,13 @@
   <main class="app-main">
     <section class="palettes-section">
       <div class="section-header">
-        <h2>Palettes</h2>
+        <h2>パレット一覧</h2>
         <button id="add-palette-btn" class="btn btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Add Palette
+          パレットを追加
         </button>
       </div>
       <div class="palette-cards-grid" id="palette-cards"></div>
@@ -70,7 +70,7 @@
 
     <section class="editor-section-wrapper" id="palette-editor">
       <div class="empty-state">
-        <p>Select a palette to edit, or create a new one.</p>
+        <p>パレットを選択するか、新しく作成してください。</p>
       </div>
     </section>
   </main>

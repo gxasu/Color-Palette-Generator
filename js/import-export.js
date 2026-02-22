@@ -63,7 +63,7 @@ export function importFromFigmaJson(jsonString) {
   const data = JSON.parse(jsonString);
 
   if (!data.variables || !data.modes) {
-    throw new Error('Invalid Figma JSON format: missing variables or modes');
+    throw new Error('無効なFigma JSONフォーマット: variablesまたはmodesがありません');
   }
 
   // Group variables by palette name (folder)
@@ -128,7 +128,7 @@ export function importFromFigmaJson(jsonString) {
 
   return {
     palettes,
-    collectionName: data.name || 'Imported Collection',
+    collectionName: data.name || 'インポート済みコレクション',
   };
 }
 

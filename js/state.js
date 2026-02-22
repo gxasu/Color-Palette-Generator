@@ -5,7 +5,7 @@ let state = {
   palettes: [],
   selectedPaletteId: null,
   theme: 'system',
-  collectionName: 'Color Palette',
+  collectionName: 'カラーパレット',
   backgroundPreview: 'light', // 'light' or 'dark' for the palette card preview
 };
 
@@ -60,12 +60,12 @@ export function createPalette(baseHex = null) {
     modes: [
       {
         id: generateId(),
-        name: 'Light',
+        name: 'ライト',
         colors: colors.map((c) => ({ ...c })),
       },
       {
         id: generateId(),
-        name: 'Dark',
+        name: 'ダーク',
         colors: generatePalette(hex, 11, -0.3).map((c) => ({ ...c })),
       },
     ],
@@ -200,7 +200,7 @@ export function setActiveMode(paletteId, modeId) {
   notify();
 }
 
-export function addMode(paletteId, name = 'New Mode') {
+export function addMode(paletteId, name = '新規モード') {
   state = {
     ...state,
     palettes: state.palettes.map((p) => {

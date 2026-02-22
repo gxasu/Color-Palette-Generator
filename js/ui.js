@@ -94,7 +94,7 @@ function setupGlobalEvents() {
           setCollectionName(result.collectionName);
         }
       } catch (err) {
-        alert('Import failed: ' + err.message);
+        alert('インポートに失敗しました: ' + err.message);
       }
     };
     reader.readAsText(file);
@@ -138,10 +138,10 @@ function renderPaletteCards(state) {
       <div class="card-header">
         <input class="card-name-input" value="${escapeHtml(palette.name)}"
                onclick="event.stopPropagation()" />
-        <button class="card-delete-btn" title="Delete palette">&times;</button>
+        <button class="card-delete-btn" title="パレットを削除">&times;</button>
       </div>
       <div class="card-colors">${colorsHtml}</div>
-      <div class="card-meta">${colors.length} colors &middot; ${palette.modes.length} mode${palette.modes.length > 1 ? 's' : ''}</div>
+      <div class="card-meta">${colors.length}色 &middot; ${palette.modes.length}モード</div>
     `;
 
     const nameInput = card.querySelector('.card-name-input');
@@ -177,7 +177,7 @@ function renderSelectedPalette(state) {
             <circle cx="16.5" cy="11" r="1.5"/>
           </svg>
         </div>
-        <p>Select a palette to edit, or create a new one.</p>
+        <p>パレットを選択するか、新しく作成してください。</p>
       </div>`;
     return;
   }
@@ -187,7 +187,7 @@ function renderSelectedPalette(state) {
 
   container.innerHTML = `
     <div class="editor-section">
-      <h3 class="section-title">Base Color</h3>
+      <h3 class="section-title">ベースカラー</h3>
       <div class="base-color-row">
         <div class="color-picker-wrapper">
           <input type="color" id="base-color-picker" value="${palette.baseColor}" />
@@ -200,31 +200,31 @@ function renderSelectedPalette(state) {
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">Palette Settings</h3>
+      <h3 class="section-title">パレット設定</h3>
       <div class="settings-grid">
         <div class="setting-item">
-          <label>Colors</label>
+          <label>カラー数</label>
           <div class="setting-control">
             <input type="range" id="color-count-range" min="2" max="20" value="${palette.colorCount}" />
             <input type="number" id="color-count-input" min="2" max="20" value="${palette.colorCount}" class="number-input" />
           </div>
         </div>
         <div class="setting-item">
-          <label>Lightness Curve</label>
+          <label>明度カーブ</label>
           <div class="setting-control">
             <input type="range" id="lightness-curve-range" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" />
             <input type="number" id="lightness-curve-input" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" class="number-input" />
           </div>
         </div>
         <div class="setting-item">
-          <label>Light Background</label>
+          <label>ライト背景</label>
           <div class="bg-color-control">
             <input type="color" id="light-bg-picker" value="${palette.lightBg}" />
             <input type="text" id="light-bg-hex" class="hex-input small" value="${palette.lightBg}" />
           </div>
         </div>
         <div class="setting-item">
-          <label>Dark Background</label>
+          <label>ダーク背景</label>
           <div class="bg-color-control">
             <input type="color" id="dark-bg-picker" value="${palette.darkBg}" />
             <input type="text" id="dark-bg-hex" class="hex-input small" value="${palette.darkBg}" />
@@ -234,19 +234,19 @@ function renderSelectedPalette(state) {
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">Modes</h3>
+      <h3 class="section-title">モード</h3>
       <div class="modes-bar">
         <div class="mode-tabs" id="mode-tabs"></div>
-        <button class="mode-add-btn" id="add-mode-btn" title="Add mode">+</button>
+        <button class="mode-add-btn" id="add-mode-btn" title="モードを追加">+</button>
       </div>
     </div>
 
     <div class="editor-section">
       <div class="preview-toggle-row">
-        <h3 class="section-title">Color Swatches</h3>
+        <h3 class="section-title">カラースウォッチ</h3>
         <div class="preview-bg-toggle">
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">Light</button>
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">Dark</button>
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">ライト</button>
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">ダーク</button>
         </div>
       </div>
       <div class="color-swatches" id="color-swatches"
@@ -255,24 +255,24 @@ function renderSelectedPalette(state) {
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">Lightness Chart</h3>
+      <h3 class="section-title">明度チャート</h3>
       <div class="chart-container">
         <canvas id="lightness-chart"></canvas>
       </div>
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">Contrast Ratios</h3>
+      <h3 class="section-title">コントラスト比</h3>
       <div class="contrast-table-wrapper">
         <table class="contrast-table" id="contrast-table">
           <thead>
             <tr>
-              <th>Step</th>
-              <th>Color</th>
+              <th>ステップ</th>
+              <th>カラー</th>
               <th>HEX</th>
               <th>OKLCH</th>
-              <th>vs Light BG</th>
-              <th>vs Dark BG</th>
+              <th>ライト背景比</th>
+              <th>ダーク背景比</th>
             </tr>
           </thead>
           <tbody id="contrast-tbody"></tbody>
@@ -373,7 +373,7 @@ function renderModeTabs(palette) {
 
     tab.innerHTML = `
       <input class="mode-name-input" value="${escapeHtml(mode.name)}" />
-      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="Delete mode">&times;</button>' : ''}
+      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除">&times;</button>' : ''}
     `;
 
     tab.addEventListener('click', (e) => {
@@ -415,7 +415,7 @@ function renderSwatches(palette, colors, state) {
     swatch.innerHTML = `
       <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
         <span class="swatch-step">${step}</span>
-        ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">BASE</span>' : ''}
+        ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
       </div>
       <div class="swatch-info">
         <input type="color" class="swatch-picker" value="${color.hex}" />

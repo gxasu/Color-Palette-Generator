@@ -249,23 +249,23 @@ export function randomColor() {
 export function getColorName(hex) {
   const { h, C, L } = hexToOklch(hex);
   if (C < 0.02) {
-    if (L < 0.2) return 'Black';
-    if (L > 0.9) return 'White';
-    return 'Gray';
+    if (L < 0.2) return 'ブラック';
+    if (L > 0.9) return 'ホワイト';
+    return 'グレー';
   }
   const hueNames = [
-    [15, 'Red'],
-    [45, 'Orange'],
-    [75, 'Yellow'],
-    [150, 'Green'],
-    [210, 'Cyan'],
-    [260, 'Blue'],
-    [310, 'Purple'],
-    [345, 'Pink'],
-    [360, 'Red'],
+    [15, '赤'],
+    [45, 'オレンジ'],
+    [75, '黄'],
+    [150, '緑'],
+    [210, 'シアン'],
+    [260, '青'],
+    [310, '紫'],
+    [345, 'ピンク'],
+    [360, '赤'],
   ];
   for (const [boundary, name] of hueNames) {
     if (h <= boundary) return name;
   }
-  return 'Red';
+  return '赤';
 }
