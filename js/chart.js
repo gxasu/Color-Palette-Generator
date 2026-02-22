@@ -1,19 +1,21 @@
-// Lightness Chart Visualization using Canvas – Interactive drag support
+// Lightness/Alpha Chart Visualization using Canvas – Interactive drag support
 
 const PADDING = { top: 16, right: 16, bottom: 28, left: 36 };
 const HIT_RADIUS = 12; // px tolerance for point picking
 
 // Compute the position of each data point in CSS-pixel space.
-function pointPositions(colors, chartW, chartH) {
+function pointPositions(colors, chartW, chartH, valueKey = 'L') {
   const n = Math.max(1, colors.length - 1);
   return colors.map((c, i) => ({
     x: PADDING.left + (chartW / n) * i,
-    y: PADDING.top + chartH * (1 - c.L),
+    y: PADDING.top + chartH * (1 - (c[valueKey] ?? c.L)),
     index: i,
   }));
 }
 
-export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) {
+// options: { valueKey: 'L' | 'alpha' }
+export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames, options = {}) {
+  const { valueKey = 'L' } = options;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -53,7 +55,12 @@ export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) 
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= 4; i++) {
     const y = PADDING.top + (chartH / 4) * i;
-    ctx.fillText((1 - i / 4).toFixed(1), PADDING.left - 6, y);
+    const val = 1 - i / 4;
+    if (valueKey === 'alpha') {
+      ctx.fillText(Math.round(val * 100) + '%', PADDING.left - 6, y);
+    } else {
+      ctx.fillText(val.toFixed(1), PADDING.left - 6, y);
+    }
   }
 
   // X-axis labels (use stepNames if provided)
@@ -71,7 +78,7 @@ export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) 
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  const pts = pointPositions(colors, chartW, chartH);
+  const pts = pointPositions(colors, chartW, chartH, valueKey);
   pts.forEach((p, i) => {
     if (i === 0) ctx.moveTo(p.x, p.y);
     else ctx.lineTo(p.x, p.y);
@@ -83,7 +90,14 @@ export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) 
     const isBase = i === baseColorIndex;
     ctx.beginPath();
     ctx.arc(p.x, p.y, isBase ? 7 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = colors[i].hex;
+
+    if (valueKey === 'alpha') {
+      // Draw checkerboard under point for alpha visualization
+      const alpha = colors[i].alpha ?? 1;
+      ctx.fillStyle = `rgba(128, 128, 128, ${alpha})`;
+    } else {
+      ctx.fillStyle = colors[i].hex;
+    }
     ctx.fill();
     ctx.strokeStyle = isBase ? lineColor : gridColor;
     ctx.lineWidth = isBase ? 2.5 : 1.5;
@@ -91,9 +105,11 @@ export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) 
   });
 }
 
-// Make the chart interactive: drag points vertically to change lightness.
-// onLightnessChange(colorIndex, newL) is called during drag.
-export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, onLightnessChange) {
+// Make the chart interactive: drag points vertically to change value.
+// onValueChange(colorIndex, newVal) is called during drag.
+// options: { valueKey: 'L' | 'alpha', onDragStart, onDragEnd }
+export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, onValueChange, options = {}) {
+  const { valueKey = 'L', onDragStart, onDragEnd } = options;
   let dragging = null; // index of point being dragged
 
   function getCSSCoords(e) {
@@ -107,7 +123,7 @@ export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, 
     const rect = canvas.getBoundingClientRect();
     const chartW = rect.width - PADDING.left - PADDING.right;
     const chartH = rect.height - PADDING.top - PADDING.bottom;
-    const pts = pointPositions(colors, chartW, chartH);
+    const pts = pointPositions(colors, chartW, chartH, valueKey);
     let closest = null;
     let minDist = HIT_RADIUS;
     pts.forEach((p) => {
@@ -120,11 +136,11 @@ export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, 
     return closest;
   }
 
-  function yToL(y) {
+  function yToValue(y) {
     const rect = canvas.getBoundingClientRect();
     const chartH = rect.height - PADDING.top - PADDING.bottom;
-    const l = 1 - (y - PADDING.top) / chartH;
-    return Math.max(0, Math.min(1, l));
+    const val = 1 - (y - PADDING.top) / chartH;
+    return Math.max(0, Math.min(1, val));
   }
 
   function onDown(e) {
@@ -134,6 +150,7 @@ export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, 
       dragging = idx;
       canvas.style.cursor = 'grabbing';
       e.preventDefault();
+      if (onDragStart) onDragStart();
     }
   }
 
@@ -146,14 +163,15 @@ export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, 
     }
     e.preventDefault();
     const { y } = getCSSCoords(e);
-    const newL = yToL(y);
-    onLightnessChange(dragging, newL);
+    const newVal = yToValue(y);
+    onValueChange(dragging, newVal);
   }
 
   function onUp() {
     if (dragging !== null) {
       dragging = null;
       canvas.style.cursor = 'default';
+      if (onDragEnd) onDragEnd();
     }
   }
 

@@ -47,10 +47,16 @@
     <aside class="panel-left">
       <div class="panel-header">
         <span class="title-small">パレット一覧</span>
-        <md-filled-tonal-button id="add-palette-btn">
-          <md-icon slot="icon">add</md-icon>
-          追加
-        </md-filled-tonal-button>
+        <div class="panel-header-actions">
+          <md-filled-tonal-button id="add-palette-btn">
+            <md-icon slot="icon">add</md-icon>
+            追加
+          </md-filled-tonal-button>
+          <md-filled-tonal-button id="add-alpha-palette-btn" title="透明度スケールを追加">
+            <md-icon slot="icon">opacity</md-icon>
+            Alpha
+          </md-filled-tonal-button>
+        </div>
       </div>
       <div class="palette-list" id="palette-cards"></div>
     </aside>
