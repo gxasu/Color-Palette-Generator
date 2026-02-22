@@ -1,72 +1,126 @@
-// Figma JSON Import/Export
-import { hexToOklch, generatePalette, findBaseColorIndex, oklchToHex } from './color-utils.js';
+// Figma JSON Import/Export – DTCG (Design Token Community Group) format
+import { hexToOklch } from './color-utils.js';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// Export all palettes to Figma Variables JSON format
-export function exportToFigmaJson(palettes, collectionName = 'Color Palette') {
-  const collection = {
-    name: collectionName,
-    modes: [],
-    variables: [],
-  };
+// Export palettes to Figma Variables JSON (DTCG) format.
+// Exports one mode at a time – Figma expects a separate file per mode.
+export function exportToFigmaJson(palettes, modeName = 'light') {
+  const output = {};
 
-  // Collect all unique mode names across palettes
-  const allModeNames = new Set();
-  palettes.forEach((p) => {
-    p.modes.forEach((m) => allModeNames.add(m.name));
-  });
-
-  collection.modes = Array.from(allModeNames).map((name) => ({
-    name,
-    modeId: name,
-  }));
-
-  // Create variables for each palette color
   palettes.forEach((palette) => {
-    palette.modes[0].colors.forEach((_, colorIndex) => {
-      const step = (colorIndex + 1) * 100;
-      const variable = {
-        name: `${palette.name}/${step}`,
-        type: 'color',
-        values: {},
+    const mode =
+      palette.modes.find((m) => m.name === modeName) || palette.modes[0];
+    const paletteObj = {};
+
+    mode.colors.forEach((color, i) => {
+      const step = String((i + 1) * 10);
+      const hex = color.hex.toUpperCase();
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+      const stepObj = {
+        $type: 'color',
+        $value: {
+          colorSpace: 'srgb',
+          components: [r, g, b],
+          alpha: 1,
+          hex,
+        },
+        $extensions: {
+          'com.figma.scopes': ['ALL_SCOPES'],
+          'com.figma.isOverride': true,
+        },
       };
 
-      collection.modes.forEach((mode) => {
-        const paletteMode = palette.modes.find((m) => m.name === mode.name);
-        if (paletteMode && paletteMode.colors[colorIndex]) {
-          const color = paletteMode.colors[colorIndex];
-          const hex = color.hex;
-          const r = parseInt(hex.slice(1, 3), 16) / 255;
-          const g = parseInt(hex.slice(3, 5), 16) / 255;
-          const b = parseInt(hex.slice(5, 7), 16) / 255;
-          variable.values[mode.modeId] = {
-            r: Math.round(r * 1000) / 1000,
-            g: Math.round(g * 1000) / 1000,
-            b: Math.round(b * 1000) / 1000,
-            a: 1,
-          };
-        }
-      });
+      if (i === palette.baseColorIndex) {
+        stepObj.$description = 'Base Color';
+      }
 
-      collection.variables.push(variable);
+      paletteObj[step] = stepObj;
     });
+
+    output[palette.name] = paletteObj;
   });
 
-  return JSON.stringify(collection, null, 2);
+  output.$extensions = {
+    'com.figma.modeName': modeName,
+  };
+
+  return JSON.stringify(output, null, 2);
 }
 
-// Import from Figma Variables JSON format
+// Import from Figma Variables JSON (DTCG) format.
 export function importFromFigmaJson(jsonString) {
   const data = JSON.parse(jsonString);
 
-  if (!data.variables || !data.modes) {
-    throw new Error('無効なFigma JSONフォーマット: variablesまたはmodesがありません');
+  // Detect: DTCG format has palette-name keys with step sub-keys,
+  // while the old custom format has "variables" and "modes" arrays.
+  if (data.variables && data.modes) {
+    return importLegacyFormat(data);
   }
 
-  // Group variables by palette name (folder)
+  const modeName =
+    data.$extensions?.['com.figma.modeName'] || 'light';
+  const palettes = [];
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key.startsWith('$')) return; // skip $extensions etc.
+    if (typeof value !== 'object' || value === null) return;
+
+    const steps = Object.entries(value)
+      .filter(([k]) => !k.startsWith('$'))
+      .sort(([a], [b]) => parseInt(a) - parseInt(b));
+
+    if (steps.length === 0) return;
+
+    let baseColorIndex = Math.floor(steps.length / 2);
+
+    const colors = steps.map(([, stepData], i) => {
+      const hex = stepData.$value?.hex || '#808080';
+      const oklch = hexToOklch(hex);
+
+      if (stepData.$description === 'Base Color') {
+        baseColorIndex = i;
+      }
+
+      return { ...oklch, hex };
+    });
+
+    const baseColor = colors[baseColorIndex]?.hex || '#808080';
+    const modeId = generateId();
+
+    palettes.push({
+      id: generateId(),
+      name: key,
+      baseColor,
+      colorCount: colors.length,
+      lightnessCurve: 0.3,
+      lightBg: '#ffffff',
+      darkBg: '#1a1a1a',
+      baseColorIndex,
+      modes: [
+        {
+          id: modeId,
+          name: modeName,
+          colors,
+        },
+      ],
+      activeModeId: modeId,
+    });
+  });
+
+  return {
+    palettes,
+    collectionName: null,
+  };
+}
+
+// Legacy format support (old custom JSON with "variables" / "modes" arrays)
+function importLegacyFormat(data) {
   const paletteGroups = {};
   data.variables.forEach((variable) => {
     const parts = variable.name.split('/');
@@ -80,7 +134,6 @@ export function importFromFigmaJson(jsonString) {
   const palettes = [];
 
   Object.entries(paletteGroups).forEach(([name, variables]) => {
-    // Sort variables by their step number
     variables.sort((a, b) => {
       const aStep = parseInt(a.name.split('/').pop()) || 0;
       const bStep = parseInt(b.name.split('/').pop()) || 0;
@@ -89,13 +142,23 @@ export function importFromFigmaJson(jsonString) {
 
     const modes = data.modes.map((mode) => {
       const colors = variables.map((variable) => {
-        const value = variable.values[mode.modeId] || variable.values[Object.keys(variable.values)[0]];
+        const value =
+          variable.values[mode.modeId] ||
+          variable.values[Object.keys(variable.values)[0]];
         if (!value) return { L: 0.5, C: 0, h: 0, hex: '#808080' };
 
         const r = Math.round((value.r || 0) * 255);
         const g = Math.round((value.g || 0) * 255);
         const b = Math.round((value.b || 0) * 255);
-        const hex = '#' + [r, g, b].map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, '0')).join('');
+        const hex =
+          '#' +
+          [r, g, b]
+            .map((c) =>
+              Math.max(0, Math.min(255, c))
+                .toString(16)
+                .padStart(2, '0')
+            )
+            .join('');
         const oklch = hexToOklch(hex);
         return { ...oklch, hex };
       });
@@ -107,7 +170,6 @@ export function importFromFigmaJson(jsonString) {
       };
     });
 
-    // Determine base color from middle of first mode
     const firstModeColors = modes[0]?.colors || [];
     const midIndex = Math.floor(firstModeColors.length / 2);
     const baseColor = firstModeColors[midIndex]?.hex || '#808080';
@@ -128,7 +190,7 @@ export function importFromFigmaJson(jsonString) {
 
   return {
     palettes,
-    collectionName: data.name || 'インポート済みコレクション',
+    collectionName: data.name || null,
   };
 }
 
