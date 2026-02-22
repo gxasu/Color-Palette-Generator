@@ -18,13 +18,10 @@ import {
   updateModeColor,
   setTheme,
   setCollectionName,
-  setCollectionSlug,
   getSelectedPalette,
   setBackgroundPreview,
   importPalettes,
   replaceAllPalettes,
-  updatePaletteSlug,
-  updateModeSlug,
 } from './state.js';
 
 import {
@@ -78,9 +75,8 @@ function setupGlobalEvents() {
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const state = getState();
-    const slug = state.collectionSlug || 'color-palette';
-    const json = exportToFigmaJson(state.palettes, slug);
-    downloadJson(json, `${slug}.json`);
+    const json = exportToFigmaJson(state.palettes, state.collectionName);
+    downloadJson(json, `${state.collectionName.replace(/\s+/g, '-').toLowerCase()}.json`);
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
@@ -109,10 +105,6 @@ function setupGlobalEvents() {
   document.getElementById('collection-name').addEventListener('change', (e) => {
     setCollectionName(e.target.value);
   });
-
-  document.getElementById('collection-slug').addEventListener('change', (e) => {
-    setCollectionSlug(e.target.value);
-  });
 }
 
 function render(state) {
@@ -123,7 +115,6 @@ function render(state) {
   }
   document.getElementById('theme-select').value = state.theme;
   document.getElementById('collection-name').value = state.collectionName;
-  document.getElementById('collection-slug').value = state.collectionSlug || 'color-palette';
 }
 
 // ===== Left Panel: Palette List =====
@@ -271,15 +262,6 @@ function renderRightPanel(state) {
 
   container.innerHTML = `
     <div class="editor-section">
-      <span class="section-title">エクスポートキー</span>
-      <input type="text" id="palette-slug" class="md-input-compact slug-input" value="${escapeHtml(palette.slug || '')}"
-             placeholder="palette-key" />
-      <p class="body-small" style="margin-top:4px">JSONエクスポート時の変数名に使用されます</p>
-    </div>
-
-    <md-divider></md-divider>
-
-    <div class="editor-section" style="margin-top:20px">
       <span class="section-title">ベースカラー</span>
       <div class="base-color-row">
         <div class="color-picker-wrapper">
@@ -354,11 +336,6 @@ function setupChartResize(canvas, colors, baseColorIndex) {
 
 function bindPropertyEvents(palette) {
   const id = palette.id;
-
-  // Palette slug
-  document.getElementById('palette-slug').addEventListener('change', (e) => {
-    updatePaletteSlug(id, e.target.value);
-  });
 
   // Base color
   document.getElementById('base-color-picker').addEventListener('input', (e) => {
@@ -436,10 +413,7 @@ function renderModeTabs(palette) {
     tab.className = `mode-tab ${mode.id === palette.activeModeId ? 'active' : ''}`;
 
     tab.innerHTML = `
-      <div class="mode-tab-labels">
-        <input class="mode-name-input" value="${escapeHtml(mode.name)}" />
-        <input class="mode-slug-input" value="${escapeHtml(mode.slug || '')}" placeholder="key" />
-      </div>
+      <input class="mode-name-input" value="${escapeHtml(mode.name)}" />
       ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除">✕</button>' : ''}
     `;
 
@@ -453,13 +427,6 @@ function renderModeTabs(palette) {
       updateModeName(palette.id, mode.id, e.target.value);
     });
     tab.querySelector('.mode-name-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') e.target.blur();
-    });
-
-    tab.querySelector('.mode-slug-input').addEventListener('change', (e) => {
-      updateModeSlug(palette.id, mode.id, e.target.value);
-    });
-    tab.querySelector('.mode-slug-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') e.target.blur();
     });
 

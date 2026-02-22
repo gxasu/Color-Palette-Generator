@@ -6,45 +6,36 @@ function generateId() {
 }
 
 // Export all palettes to Figma Variables JSON format
-export function exportToFigmaJson(palettes, collectionSlug = 'color-palette') {
+export function exportToFigmaJson(palettes, collectionName = 'Color Palette') {
   const collection = {
-    name: collectionSlug,
+    name: collectionName,
     modes: [],
     variables: [],
   };
 
-  // Collect all unique mode slugs across palettes
-  const allModeSlugs = new Map();
+  // Collect all unique mode names across palettes
+  const allModeNames = new Set();
   palettes.forEach((p) => {
-    p.modes.forEach((m) => {
-      const slug = m.slug || m.name.toLowerCase().replace(/\s+/g, '-');
-      if (!allModeSlugs.has(slug)) {
-        allModeSlugs.set(slug, slug);
-      }
-    });
+    p.modes.forEach((m) => allModeNames.add(m.name));
   });
 
-  collection.modes = Array.from(allModeSlugs.keys()).map((slug) => ({
-    name: slug,
-    modeId: slug,
+  collection.modes = Array.from(allModeNames).map((name) => ({
+    name,
+    modeId: name,
   }));
 
   // Create variables for each palette color
   palettes.forEach((palette) => {
-    const paletteSlug = palette.slug || palette.name.toLowerCase().replace(/\s+/g, '-');
     palette.modes[0].colors.forEach((_, colorIndex) => {
       const step = (colorIndex + 1) * 100;
       const variable = {
-        name: `${paletteSlug}/${step}`,
+        name: `${palette.name}/${step}`,
         type: 'color',
         values: {},
       };
 
       collection.modes.forEach((mode) => {
-        const paletteMode = palette.modes.find((m) => {
-          const mSlug = m.slug || m.name.toLowerCase().replace(/\s+/g, '-');
-          return mSlug === mode.modeId;
-        });
+        const paletteMode = palette.modes.find((m) => m.name === mode.name);
         if (paletteMode && paletteMode.colors[colorIndex]) {
           const color = paletteMode.colors[colorIndex];
           const hex = color.hex;
