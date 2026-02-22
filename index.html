@@ -23,20 +23,16 @@
         <input type="text" id="collection-name" value="カラーパレット" class="md-input" placeholder=" " />
         <label for="collection-name">コレクション</label>
       </div>
-      <div class="collection-name-wrapper">
-        <input type="text" id="collection-slug" value="color-palette" class="md-input" placeholder=" " />
-        <label for="collection-slug">Export Key</label>
-      </div>
       <div class="header-actions">
-        <md-text-button id="import-btn" title="JSONインポート">
+        <md-filled-tonal-button id="import-btn" title="JSONインポート">
           <md-icon slot="icon">download</md-icon>
           インポート
-        </md-text-button>
+        </md-filled-tonal-button>
         <input type="file" id="import-file" accept=".json" hidden />
-        <md-text-button id="export-btn" title="JSONエクスポート">
+        <md-filled-tonal-button id="export-btn" title="JSONエクスポート">
           <md-icon slot="icon">upload</md-icon>
           エクスポート
-        </md-text-button>
+        </md-filled-tonal-button>
         <select id="theme-select" class="md-select" title="テーマ">
           <option value="light">ライト</option>
           <option value="dark">ダーク</option>
