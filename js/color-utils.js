@@ -248,9 +248,9 @@ export function randomColor() {
 // Get a color name approximation based on hue
 export function getColorName(hex) {
   const { h, C, L } = hexToOklch(hex);
-  if (C < 0.02) {
+  if (C < 0.04) {
     if (L < 0.2) return 'ブラック';
-    if (L > 0.9) return 'ホワイト';
+    if (L > 0.85) return 'ホワイト';
     return 'グレー';
   }
   const hueNames = [
@@ -273,9 +273,9 @@ export function getColorName(hex) {
 // Get an English color name for export keys
 export function getColorNameEn(hex) {
   const { h, C, L } = hexToOklch(hex);
-  if (C < 0.02) {
+  if (C < 0.04) {
     if (L < 0.2) return 'black';
-    if (L > 0.9) return 'white';
+    if (L > 0.85) return 'white';
     return 'gray';
   }
   const hueNames = [
