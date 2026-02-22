@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@material/web": "^2.4.1"
   }
 }

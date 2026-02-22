@@ -14,11 +14,11 @@ export function renderLightnessChart(canvas, colors, baseColorIndex) {
   const chartW = w - padding.left - padding.right;
   const chartH = h - padding.top - padding.bottom;
 
-  // Get computed styles for theme-aware colors
+  // Get MD3 theme-aware colors
   const styles = getComputedStyle(document.documentElement);
-  const textColor = styles.getPropertyValue('--color-text-secondary').trim() || '#666';
-  const gridColor = styles.getPropertyValue('--color-border').trim() || '#e0e0e0';
-  const lineColor = styles.getPropertyValue('--color-primary').trim() || '#6366f1';
+  const textColor = styles.getPropertyValue('--md-sys-color-on-surface-variant').trim() || '#666';
+  const gridColor = styles.getPropertyValue('--md-sys-color-outline-variant').trim() || '#e0e0e0';
+  const lineColor = styles.getPropertyValue('--md-sys-color-primary').trim() || '#5b57d6';
 
   ctx.clearRect(0, 0, w, h);
 
@@ -35,7 +35,7 @@ export function renderLightnessChart(canvas, colors, baseColorIndex) {
 
   // Y-axis labels
   ctx.fillStyle = textColor;
-  ctx.font = '10px system-ui, sans-serif';
+  ctx.font = '10px Roboto, system-ui, sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= 4; i++) {

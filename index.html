@@ -4,47 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OKLCH カラーパレットジェネレーター</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
       <h1 class="app-title">
-        <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
-        </svg>
+        <md-icon class="logo-icon">palette</md-icon>
         OKLCH パレット
       </h1>
     </div>
     <div class="header-right">
       <div class="collection-name-wrapper">
-        <label for="collection-name">コレクション</label>
-        <input type="text" id="collection-name" value="カラーパレット" class="collection-input" />
+        <label for="collection-name" class="label-small">コレクション</label>
+        <input type="text" id="collection-name" value="カラーパレット" class="md-input" />
       </div>
       <div class="header-actions">
-        <button id="import-btn" class="btn btn-secondary" title="JSONインポート">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
+        <md-text-button id="import-btn" title="JSONインポート">
+          <md-icon slot="icon">download</md-icon>
           インポート
-        </button>
+        </md-text-button>
         <input type="file" id="import-file" accept=".json" hidden />
-        <button id="export-btn" class="btn btn-secondary" title="JSONエクスポート">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+        <md-text-button id="export-btn" title="JSONエクスポート">
+          <md-icon slot="icon">upload</md-icon>
           エクスポート
-        </button>
-        <select id="theme-select" class="theme-select" title="テーマ">
+        </md-text-button>
+        <select id="theme-select" class="md-select" title="テーマ">
           <option value="light">ライト</option>
           <option value="dark">ダーク</option>
           <option value="system">システム</option>
@@ -57,14 +46,11 @@
     <!-- 左パネル: パレット一覧 -->
     <aside class="panel-left">
       <div class="panel-header">
-        <h2>パレット一覧</h2>
-        <button id="add-palette-btn" class="btn btn-primary btn-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+        <span class="title-small">パレット一覧</span>
+        <md-filled-tonal-button id="add-palette-btn">
+          <md-icon slot="icon">add</md-icon>
           追加
-        </button>
+        </md-filled-tonal-button>
       </div>
       <div class="palette-list" id="palette-cards"></div>
     </aside>
@@ -72,6 +58,7 @@
     <!-- 中央パネル: スウォッチ・チャート・コントラスト -->
     <section class="panel-center" id="panel-center">
       <div class="empty-state">
+        <md-icon class="empty-icon">palette</md-icon>
         <p>パレットを選択するか、新しく作成してください。</p>
       </div>
     </section>
@@ -79,6 +66,7 @@
     <!-- 右パネル: プロパティ -->
     <aside class="panel-right" id="panel-right">
       <div class="empty-state">
+        <md-icon class="empty-icon">tune</md-icon>
         <p>パレットを選択してください。</p>
       </div>
     </aside>

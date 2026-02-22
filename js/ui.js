@@ -140,10 +140,12 @@ function renderPaletteCards(state) {
       <div class="card-header">
         <input class="card-name-input" value="${escapeHtml(palette.name)}"
                onclick="event.stopPropagation()" />
-        <button class="card-delete-btn" title="パレットを削除">&times;</button>
+        <md-icon-button class="card-delete-btn" title="パレットを削除" onclick="event.stopPropagation()">
+          <md-icon>close</md-icon>
+        </md-icon-button>
       </div>
       <div class="card-colors">${colorsHtml}</div>
-      <div class="card-meta">${colors.length}色 &middot; ${palette.modes.length}モード</div>
+      <div class="card-meta">${colors.length}色 · ${palette.modes.length}モード</div>
     `;
 
     const nameInput = card.querySelector('.card-name-input');
@@ -172,14 +174,7 @@ function renderCenterPanel(state) {
   if (!palette) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.8-.1 2.6-.4a1 1 0 0 0 .6-1.3c-.4-1-.6-2-.6-3.1 0-4.4 3.6-8 8-8h.2a1 1 0 0 0 .9-1.3C22.3 4.4 17.5 2 12 2z"/>
-            <circle cx="7.5" cy="11" r="1.5"/>
-            <circle cx="12" cy="7.5" r="1.5"/>
-            <circle cx="16.5" cy="11" r="1.5"/>
-          </svg>
-        </div>
+        <md-icon class="empty-icon">palette</md-icon>
         <p>パレットを選択するか、新しく作成してください。</p>
       </div>`;
     return;
@@ -191,7 +186,7 @@ function renderCenterPanel(state) {
   container.innerHTML = `
     <div class="editor-section">
       <div class="preview-toggle-row">
-        <h3 class="section-title" style="margin-bottom:0">カラースウォッチ</h3>
+        <span class="section-title" style="margin-bottom:0">カラースウォッチ</span>
         <div class="preview-bg-toggle">
           <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">ライト</button>
           <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">ダーク</button>
@@ -203,14 +198,14 @@ function renderCenterPanel(state) {
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">明度チャート</h3>
+      <span class="section-title">明度チャート</span>
       <div class="chart-container">
         <canvas id="lightness-chart"></canvas>
       </div>
     </div>
 
     <div class="editor-section">
-      <h3 class="section-title">コントラスト比</h3>
+      <span class="section-title">コントラスト比</span>
       <div class="contrast-table-wrapper">
         <table class="contrast-table" id="contrast-table">
           <thead>
@@ -219,8 +214,8 @@ function renderCenterPanel(state) {
               <th>カラー</th>
               <th>HEX</th>
               <th class="oklch-cell">OKLCH</th>
-              <th>ライト背景比</th>
-              <th>ダーク背景比</th>
+              <th>ライト背景</th>
+              <th>ダーク背景</th>
             </tr>
           </thead>
           <tbody id="contrast-tbody"></tbody>
@@ -239,7 +234,6 @@ function renderCenterPanel(state) {
   renderSwatches(palette, colors, state);
   renderContrastTable(palette, colors);
 
-  // Render chart after layout
   requestAnimationFrame(() => {
     const canvas = document.getElementById('lightness-chart');
     if (canvas) {
@@ -257,6 +251,7 @@ function renderRightPanel(state) {
   if (!palette) {
     container.innerHTML = `
       <div class="empty-state">
+        <md-icon class="empty-icon">tune</md-icon>
         <p>パレットを選択してください。</p>
       </div>`;
     return;
@@ -264,7 +259,7 @@ function renderRightPanel(state) {
 
   container.innerHTML = `
     <div class="editor-section">
-      <h3 class="section-title">ベースカラー</h3>
+      <span class="section-title">ベースカラー</span>
       <div class="base-color-row">
         <div class="color-picker-wrapper">
           <input type="color" id="base-color-picker" value="${palette.baseColor}" />
@@ -276,20 +271,22 @@ function renderRightPanel(state) {
       <div class="color-info-oklch" id="base-color-info"></div>
     </div>
 
-    <div class="editor-section">
-      <h3 class="section-title">パレット設定</h3>
+    <md-divider></md-divider>
+
+    <div class="editor-section" style="margin-top:20px">
+      <span class="section-title">パレット設定</span>
       <div class="settings-grid">
         <div class="setting-item">
           <label>カラー数</label>
           <div class="setting-control">
-            <input type="range" id="color-count-range" min="2" max="20" value="${palette.colorCount}" />
+            <md-slider id="color-count-range" min="2" max="20" value="${palette.colorCount}" step="1" labeled></md-slider>
             <input type="number" id="color-count-input" min="2" max="20" value="${palette.colorCount}" class="number-input" />
           </div>
         </div>
         <div class="setting-item">
           <label>明度カーブ</label>
           <div class="setting-control">
-            <input type="range" id="lightness-curve-range" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" />
+            <md-slider id="lightness-curve-range" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" labeled></md-slider>
             <input type="number" id="lightness-curve-input" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" class="number-input" />
           </div>
         </div>
@@ -310,8 +307,10 @@ function renderRightPanel(state) {
       </div>
     </div>
 
-    <div class="editor-section">
-      <h3 class="section-title">モード</h3>
+    <md-divider></md-divider>
+
+    <div class="editor-section" style="margin-top:20px">
+      <span class="section-title">モード</span>
       <div class="modes-bar">
         <div class="mode-tabs" id="mode-tabs"></div>
         <button class="mode-add-btn" id="add-mode-btn" title="モードを追加">+</button>
@@ -319,7 +318,6 @@ function renderRightPanel(state) {
     </div>
   `;
 
-  // Bind right-panel events
   bindPropertyEvents(palette);
   renderModeTabs(palette);
   renderBaseColorInfo(palette.baseColor);
@@ -347,7 +345,7 @@ function bindPropertyEvents(palette) {
     }
   });
 
-  // Color count
+  // Color count (md-slider)
   document.getElementById('color-count-range').addEventListener('input', (e) => {
     updatePaletteColorCount(id, parseInt(e.target.value));
   });
@@ -355,7 +353,7 @@ function bindPropertyEvents(palette) {
     updatePaletteColorCount(id, parseInt(e.target.value));
   });
 
-  // Lightness curve
+  // Lightness curve (md-slider)
   document.getElementById('lightness-curve-range').addEventListener('input', (e) => {
     updateLightnessCurve(id, parseInt(e.target.value) / 100);
   });
@@ -393,7 +391,7 @@ function renderModeTabs(palette) {
 
     tab.innerHTML = `
       <input class="mode-name-input" value="${escapeHtml(mode.name)}" />
-      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除">&times;</button>' : ''}
+      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除">✕</button>' : ''}
     `;
 
     tab.addEventListener('click', (e) => {
