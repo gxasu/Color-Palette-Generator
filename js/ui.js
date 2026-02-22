@@ -108,11 +108,13 @@ function setupGlobalEvents() {
 
 function render(state) {
   renderPaletteCards(state);
-  renderSelectedPalette(state);
+  renderCenterPanel(state);
+  renderRightPanel(state);
   document.getElementById('theme-select').value = state.theme;
   document.getElementById('collection-name').value = state.collectionName;
 }
 
+// ===== Left Panel: Palette List =====
 function renderPaletteCards(state) {
   const container = document.getElementById('palette-cards');
   container.innerHTML = '';
@@ -162,8 +164,9 @@ function renderPaletteCards(state) {
   });
 }
 
-function renderSelectedPalette(state) {
-  const container = document.getElementById('palette-editor');
+// ===== Center Panel: Swatches, Chart, Contrast =====
+function renderCenterPanel(state) {
+  const container = document.getElementById('panel-center');
   const palette = getSelectedPalette();
 
   if (!palette) {
@@ -187,6 +190,80 @@ function renderSelectedPalette(state) {
 
   container.innerHTML = `
     <div class="editor-section">
+      <div class="preview-toggle-row">
+        <h3 class="section-title" style="margin-bottom:0">カラースウォッチ</h3>
+        <div class="preview-bg-toggle">
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">ライト</button>
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">ダーク</button>
+        </div>
+      </div>
+      <div class="color-swatches" id="color-swatches"
+           style="background:${state.backgroundPreview === 'light' ? palette.lightBg : palette.darkBg}">
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <h3 class="section-title">明度チャート</h3>
+      <div class="chart-container">
+        <canvas id="lightness-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <h3 class="section-title">コントラスト比</h3>
+      <div class="contrast-table-wrapper">
+        <table class="contrast-table" id="contrast-table">
+          <thead>
+            <tr>
+              <th>ステップ</th>
+              <th>カラー</th>
+              <th>HEX</th>
+              <th class="oklch-cell">OKLCH</th>
+              <th>ライト背景比</th>
+              <th>ダーク背景比</th>
+            </tr>
+          </thead>
+          <tbody id="contrast-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Bind center-panel events
+  document.querySelectorAll('.bg-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setBackgroundPreview(btn.dataset.bg);
+    });
+  });
+
+  renderSwatches(palette, colors, state);
+  renderContrastTable(palette, colors);
+
+  // Render chart after layout
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('lightness-chart');
+    if (canvas) {
+      renderLightnessChart(canvas, colors, palette.baseColorIndex);
+      setupChartResize(canvas, colors, palette.baseColorIndex);
+    }
+  });
+}
+
+// ===== Right Panel: Properties =====
+function renderRightPanel(state) {
+  const container = document.getElementById('panel-right');
+  const palette = getSelectedPalette();
+
+  if (!palette) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>パレットを選択してください。</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="editor-section">
       <h3 class="section-title">ベースカラー</h3>
       <div class="base-color-row">
         <div class="color-picker-wrapper">
@@ -195,8 +272,8 @@ function renderSelectedPalette(state) {
         </div>
         <input type="text" id="base-color-hex" class="hex-input" value="${palette.baseColor}"
                pattern="^#[0-9a-fA-F]{6}$" />
-        <div class="color-info-oklch" id="base-color-info"></div>
       </div>
+      <div class="color-info-oklch" id="base-color-info"></div>
     </div>
 
     <div class="editor-section">
@@ -240,62 +317,12 @@ function renderSelectedPalette(state) {
         <button class="mode-add-btn" id="add-mode-btn" title="モードを追加">+</button>
       </div>
     </div>
-
-    <div class="editor-section">
-      <div class="preview-toggle-row">
-        <h3 class="section-title">カラースウォッチ</h3>
-        <div class="preview-bg-toggle">
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">ライト</button>
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">ダーク</button>
-        </div>
-      </div>
-      <div class="color-swatches" id="color-swatches"
-           style="background:${state.backgroundPreview === 'light' ? palette.lightBg : palette.darkBg}">
-      </div>
-    </div>
-
-    <div class="editor-section">
-      <h3 class="section-title">明度チャート</h3>
-      <div class="chart-container">
-        <canvas id="lightness-chart"></canvas>
-      </div>
-    </div>
-
-    <div class="editor-section">
-      <h3 class="section-title">コントラスト比</h3>
-      <div class="contrast-table-wrapper">
-        <table class="contrast-table" id="contrast-table">
-          <thead>
-            <tr>
-              <th>ステップ</th>
-              <th>カラー</th>
-              <th>HEX</th>
-              <th>OKLCH</th>
-              <th>ライト背景比</th>
-              <th>ダーク背景比</th>
-            </tr>
-          </thead>
-          <tbody id="contrast-tbody"></tbody>
-        </table>
-      </div>
-    </div>
   `;
 
-  // Bind events
-  bindEditorEvents(palette, state);
+  // Bind right-panel events
+  bindPropertyEvents(palette);
   renderModeTabs(palette);
-  renderSwatches(palette, colors, state);
-  renderContrastTable(palette, colors);
   renderBaseColorInfo(palette.baseColor);
-
-  // Render chart after layout
-  requestAnimationFrame(() => {
-    const canvas = document.getElementById('lightness-chart');
-    if (canvas) {
-      renderLightnessChart(canvas, colors, palette.baseColorIndex);
-      setupChartResize(canvas, colors, palette.baseColorIndex);
-    }
-  });
 }
 
 function setupChartResize(canvas, colors, baseColorIndex) {
@@ -306,7 +333,7 @@ function setupChartResize(canvas, colors, baseColorIndex) {
   resizeObserver.observe(canvas.parentElement);
 }
 
-function bindEditorEvents(palette, state) {
+function bindPropertyEvents(palette) {
   const id = palette.id;
 
   // Base color
@@ -353,13 +380,6 @@ function bindEditorEvents(palette, state) {
   // Add mode
   document.getElementById('add-mode-btn').addEventListener('click', () => {
     addMode(id);
-  });
-
-  // Preview bg toggle
-  document.querySelectorAll('.bg-toggle-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      setBackgroundPreview(btn.dataset.bg);
-    });
   });
 }
 
@@ -439,7 +459,6 @@ function renderContrastTable(palette, colors) {
     const step = (i + 1) * 100;
     const lightCR = contrastRatio(color.hex, palette.lightBg);
     const darkCR = contrastRatio(color.hex, palette.darkBg);
-    const rgb = hexToRgb255(color.hex);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
