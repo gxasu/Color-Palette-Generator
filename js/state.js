@@ -1,5 +1,5 @@
 // Application State Management
-import { generatePalette, findBaseColorIndex, randomColor, getColorName, hexToOklch } from './color-utils.js';
+import { generatePalette, findBaseColorIndex, randomColor, getColorNameEn, hexToOklch } from './color-utils.js';
 
 let state = {
   palettes: [],
@@ -40,7 +40,7 @@ function getUniqueName(baseName, existingNames) {
 
 export function createPalette(baseHex = null) {
   const hex = baseHex || randomColor();
-  const colorName = getColorName(hex);
+  const colorName = getColorNameEn(hex);
   const existingNames = state.palettes.map((p) => p.name);
   const name = getUniqueName(colorName, existingNames);
   const id = generateId();
@@ -60,12 +60,12 @@ export function createPalette(baseHex = null) {
     modes: [
       {
         id: generateId(),
-        name: 'ライト',
+        name: 'light',
         colors: colors.map((c) => ({ ...c })),
       },
       {
         id: generateId(),
-        name: 'ダーク',
+        name: 'dark',
         colors: generatePalette(hex, 11, -0.3).map((c) => ({ ...c })),
       },
     ],
@@ -200,7 +200,7 @@ export function setActiveMode(paletteId, modeId) {
   notify();
 }
 
-export function addMode(paletteId, name = '新規モード') {
+export function addMode(paletteId, name = 'new-mode') {
   state = {
     ...state,
     palettes: state.palettes.map((p) => {
