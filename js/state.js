@@ -1,11 +1,12 @@
 // Application State Management
-import { generatePalette, findBaseColorIndex, randomColor, getColorName, hexToOklch } from './color-utils.js';
+import { generatePalette, findBaseColorIndex, randomColor, getColorName, getColorNameEn, hexToOklch } from './color-utils.js';
 
 let state = {
   palettes: [],
   selectedPaletteId: null,
   theme: 'system',
   collectionName: 'カラーパレット',
+  collectionSlug: 'color-palette',
   backgroundPreview: 'light', // 'light' or 'dark' for the palette card preview
 };
 
@@ -41,8 +42,11 @@ function getUniqueName(baseName, existingNames) {
 export function createPalette(baseHex = null) {
   const hex = baseHex || randomColor();
   const colorName = getColorName(hex);
+  const colorNameEn = getColorNameEn(hex);
   const existingNames = state.palettes.map((p) => p.name);
+  const existingSlugs = state.palettes.map((p) => p.slug || '');
   const name = getUniqueName(colorName, existingNames);
+  const slug = getUniqueName(colorNameEn, existingSlugs);
   const id = generateId();
 
   const colors = generatePalette(hex, 11, 0.3);
@@ -51,6 +55,7 @@ export function createPalette(baseHex = null) {
   const palette = {
     id,
     name,
+    slug,
     baseColor: hex,
     colorCount: 11,
     lightnessCurve: 0.3,
@@ -61,11 +66,13 @@ export function createPalette(baseHex = null) {
       {
         id: generateId(),
         name: 'ライト',
+        slug: 'light',
         colors: colors.map((c) => ({ ...c })),
       },
       {
         id: generateId(),
         name: 'ダーク',
+        slug: 'dark',
         colors: generatePalette(hex, 11, -0.3).map((c) => ({ ...c })),
       },
     ],
@@ -200,17 +207,20 @@ export function setActiveMode(paletteId, modeId) {
   notify();
 }
 
-export function addMode(paletteId, name = '新規モード') {
+export function addMode(paletteId, name = '新規モード', slug = 'new-mode') {
   state = {
     ...state,
     palettes: state.palettes.map((p) => {
       if (p.id !== paletteId) return p;
       const existingNames = p.modes.map((m) => m.name);
+      const existingSlugs = p.modes.map((m) => m.slug || '');
       const uniqueName = getUniqueName(name, existingNames);
+      const uniqueSlug = getUniqueName(slug, existingSlugs);
       const colors = generatePalette(p.baseColor, p.colorCount, p.lightnessCurve);
       const newMode = {
         id: generateId(),
         name: uniqueName,
+        slug: uniqueSlug,
         colors: colors.map((c) => ({ ...c })),
       };
       return {
@@ -286,6 +296,34 @@ export function setTheme(theme) {
 
 export function setCollectionName(name) {
   state = { ...state, collectionName: name };
+  notify();
+}
+
+export function setCollectionSlug(slug) {
+  state = { ...state, collectionSlug: slug };
+  notify();
+}
+
+export function updatePaletteSlug(id, slug) {
+  state = {
+    ...state,
+    palettes: state.palettes.map((p) => (p.id === id ? { ...p, slug } : p)),
+  };
+  notify();
+}
+
+export function updateModeSlug(paletteId, modeId, slug) {
+  state = {
+    ...state,
+    palettes: state.palettes.map((p) =>
+      p.id === paletteId
+        ? {
+            ...p,
+            modes: p.modes.map((m) => (m.id === modeId ? { ...m, slug } : m)),
+          }
+        : p
+    ),
+  };
   notify();
 }
 

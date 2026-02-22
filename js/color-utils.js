@@ -269,3 +269,28 @@ export function getColorName(hex) {
   }
   return '赤';
 }
+
+// Get an English color name for export keys
+export function getColorNameEn(hex) {
+  const { h, C, L } = hexToOklch(hex);
+  if (C < 0.02) {
+    if (L < 0.2) return 'black';
+    if (L > 0.9) return 'white';
+    return 'gray';
+  }
+  const hueNames = [
+    [15, 'red'],
+    [45, 'orange'],
+    [75, 'yellow'],
+    [150, 'green'],
+    [210, 'cyan'],
+    [260, 'blue'],
+    [310, 'purple'],
+    [345, 'pink'],
+    [360, 'red'],
+  ];
+  for (const [boundary, name] of hueNames) {
+    if (h <= boundary) return name;
+  }
+  return 'red';
+}
