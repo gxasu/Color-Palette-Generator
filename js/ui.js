@@ -243,10 +243,10 @@ function renderCenterPanel(state) {
     });
   });
 
+  const stepNames = palette.stepNames || colors.map((_, i) => String((i + 1) * 100));
+
   renderSwatches(palette, colors, state, stepNames);
   renderContrastTable(palette, colors, stepNames);
-
-  const stepNames = palette.stepNames || colors.map((_, i) => String((i + 1) * 100));
 
   requestAnimationFrame(() => {
     const canvas = document.getElementById('lightness-chart');
