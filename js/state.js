@@ -1,5 +1,5 @@
 // Application State Management
-import { generatePalette, findBaseColorIndex, randomColor, getColorNameEn, hexToOklch } from './color-utils.js';
+import { generatePalette, findBaseColorIndex, randomColor, getColorNameEn, hexToOklch, gamutMapOklch, oklchToHex } from './color-utils.js';
 
 let state = {
   palettes: [],
@@ -31,6 +31,10 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
+function generateStepNames(count) {
+  return Array.from({ length: count }, (_, i) => String((i + 1) * 100));
+}
+
 function getUniqueName(baseName, existingNames) {
   if (!existingNames.includes(baseName)) return baseName;
   let counter = 2;
@@ -57,6 +61,7 @@ export function createPalette(baseHex = null) {
     lightBg: '#ffffff',
     darkBg: '#1a1a1a',
     baseColorIndex: baseIndex,
+    stepNames: generateStepNames(11),
     modes: [
       {
         id: generateId(),
@@ -137,10 +142,16 @@ export function updatePaletteColorCount(id, count) {
       const colors = generatePalette(p.baseColor, count, p.lightnessCurve);
       const baseIndex = findBaseColorIndex(colors, p.baseColor);
       const darkColors = generatePalette(p.baseColor, count, -Math.abs(p.lightnessCurve));
+      // Preserve existing step names where possible, extend/truncate as needed
+      const oldNames = p.stepNames || [];
+      const stepNames = Array.from({ length: count }, (_, i) =>
+        i < oldNames.length ? oldNames[i] : String((i + 1) * 100)
+      );
       return {
         ...p,
         colorCount: count,
         baseColorIndex: baseIndex,
+        stepNames,
         modes: p.modes.map((m, i) => ({
           ...m,
           colors: i === 0 ? colors.map((c) => ({ ...c })) : darkColors.map((c) => ({ ...c })),
@@ -286,6 +297,44 @@ export function setTheme(theme) {
 
 export function setCollectionName(name) {
   state = { ...state, collectionName: name };
+  notify();
+}
+
+export function updateStepName(paletteId, index, name) {
+  state = {
+    ...state,
+    palettes: state.palettes.map((p) => {
+      if (p.id !== paletteId) return p;
+      const stepNames = [...(p.stepNames || generateStepNames(p.colorCount))];
+      stepNames[index] = name;
+      return { ...p, stepNames };
+    }),
+  };
+  notify();
+}
+
+export function updateColorLightness(paletteId, modeId, colorIndex, newL) {
+  state = {
+    ...state,
+    palettes: state.palettes.map((p) => {
+      if (p.id !== paletteId) return p;
+      return {
+        ...p,
+        modes: p.modes.map((m) => {
+          if (m.id !== modeId) return m;
+          return {
+            ...m,
+            colors: m.colors.map((c, i) => {
+              if (i !== colorIndex) return c;
+              const mapped = gamutMapOklch(newL, c.C, c.h);
+              const hex = oklchToHex(mapped.L, mapped.C, mapped.h);
+              return { L: mapped.L, C: mapped.C, h: mapped.h, hex };
+            }),
+          };
+        }),
+      };
+    }),
+  };
   notify();
 }
 
