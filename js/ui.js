@@ -75,8 +75,14 @@ function setupGlobalEvents() {
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const state = getState();
-    const json = exportToFigmaJson(state.palettes, state.collectionName);
-    downloadJson(json, `${state.collectionName.replace(/\s+/g, '-').toLowerCase()}.json`);
+    const palette = getSelectedPalette();
+    const activeMode =
+      palette?.modes.find((m) => m.id === palette.activeModeId) ||
+      palette?.modes[0];
+    const modeName = activeMode?.name || 'light';
+    const json = exportToFigmaJson(state.palettes, modeName);
+    const base = state.collectionName.replace(/\s+/g, '-').toLowerCase();
+    downloadJson(json, `${base}-${modeName}.json`);
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
