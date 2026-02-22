@@ -1,5 +1,19 @@
-// Lightness Chart Visualization using Canvas
-export function renderLightnessChart(canvas, colors, baseColorIndex) {
+// Lightness Chart Visualization using Canvas – Interactive drag support
+
+const PADDING = { top: 16, right: 16, bottom: 28, left: 36 };
+const HIT_RADIUS = 12; // px tolerance for point picking
+
+// Compute the position of each data point in CSS-pixel space.
+function pointPositions(colors, chartW, chartH) {
+  const n = Math.max(1, colors.length - 1);
+  return colors.map((c, i) => ({
+    x: PADDING.left + (chartW / n) * i,
+    y: PADDING.top + chartH * (1 - c.L),
+    index: i,
+  }));
+}
+
+export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -10,26 +24,25 @@ export function renderLightnessChart(canvas, colors, baseColorIndex) {
 
   const w = rect.width;
   const h = rect.height;
-  const padding = { top: 16, right: 16, bottom: 28, left: 36 };
-  const chartW = w - padding.left - padding.right;
-  const chartH = h - padding.top - padding.bottom;
+  const chartW = w - PADDING.left - PADDING.right;
+  const chartH = h - PADDING.top - PADDING.bottom;
 
-  // Get MD3 theme-aware colors
+  // Theme-aware colors
   const styles = getComputedStyle(document.documentElement);
   const textColor = styles.getPropertyValue('--md-sys-color-on-surface-variant').trim() || '#666';
   const gridColor = styles.getPropertyValue('--md-sys-color-outline-variant').trim() || '#e0e0e0';
-  const lineColor = styles.getPropertyValue('--md-sys-color-primary').trim() || '#5b57d6';
+  const lineColor = styles.getPropertyValue('--md-sys-color-primary').trim() || '#5e5e5e';
 
   ctx.clearRect(0, 0, w, h);
 
-  // Draw grid lines
+  // Grid lines
   ctx.strokeStyle = gridColor;
   ctx.lineWidth = 0.5;
   for (let i = 0; i <= 4; i++) {
-    const y = padding.top + (chartH / 4) * i;
+    const y = PADDING.top + (chartH / 4) * i;
     ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(w - padding.right, y);
+    ctx.moveTo(PADDING.left, y);
+    ctx.lineTo(w - PADDING.right, y);
     ctx.stroke();
   }
 
@@ -39,45 +52,126 @@ export function renderLightnessChart(canvas, colors, baseColorIndex) {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   for (let i = 0; i <= 4; i++) {
-    const y = padding.top + (chartH / 4) * i;
-    const val = (1 - i / 4).toFixed(1);
-    ctx.fillText(val, padding.left - 6, y);
+    const y = PADDING.top + (chartH / 4) * i;
+    ctx.fillText((1 - i / 4).toFixed(1), PADDING.left - 6, y);
   }
 
-  // X-axis labels
+  // X-axis labels (use stepNames if provided)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+  const names = stepNames || colors.map((_, i) => String((i + 1) * 100));
   colors.forEach((_, i) => {
-    const x = padding.left + (chartW / Math.max(1, colors.length - 1)) * i;
-    ctx.fillText((i + 1) * 100, x, h - padding.bottom + 8);
+    const x = PADDING.left + (chartW / Math.max(1, colors.length - 1)) * i;
+    ctx.fillText(names[i] || String((i + 1) * 100), x, h - PADDING.bottom + 8);
   });
 
   if (colors.length === 0) return;
 
-  // Draw line connecting lightness values
+  // Line
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  colors.forEach((color, i) => {
-    const x = padding.left + (chartW / Math.max(1, colors.length - 1)) * i;
-    const y = padding.top + chartH * (1 - color.L);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+  const pts = pointPositions(colors, chartW, chartH);
+  pts.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
   });
   ctx.stroke();
 
-  // Draw points
-  colors.forEach((color, i) => {
-    const x = padding.left + (chartW / Math.max(1, colors.length - 1)) * i;
-    const y = padding.top + chartH * (1 - color.L);
-
-    // Point fill with actual color
+  // Points
+  pts.forEach((p, i) => {
+    const isBase = i === baseColorIndex;
     ctx.beginPath();
-    ctx.arc(x, y, i === baseColorIndex ? 6 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = color.hex;
+    ctx.arc(p.x, p.y, isBase ? 7 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = colors[i].hex;
     ctx.fill();
-    ctx.strokeStyle = i === baseColorIndex ? lineColor : gridColor;
-    ctx.lineWidth = i === baseColorIndex ? 2.5 : 1.5;
+    ctx.strokeStyle = isBase ? lineColor : gridColor;
+    ctx.lineWidth = isBase ? 2.5 : 1.5;
     ctx.stroke();
   });
+}
+
+// Make the chart interactive: drag points vertically to change lightness.
+// onLightnessChange(colorIndex, newL) is called during drag.
+export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, onLightnessChange) {
+  let dragging = null; // index of point being dragged
+
+  function getCSSCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function hitTest(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    const chartW = rect.width - PADDING.left - PADDING.right;
+    const chartH = rect.height - PADDING.top - PADDING.bottom;
+    const pts = pointPositions(colors, chartW, chartH);
+    let closest = null;
+    let minDist = HIT_RADIUS;
+    pts.forEach((p) => {
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < minDist) {
+        minDist = d;
+        closest = p.index;
+      }
+    });
+    return closest;
+  }
+
+  function yToL(y) {
+    const rect = canvas.getBoundingClientRect();
+    const chartH = rect.height - PADDING.top - PADDING.bottom;
+    const l = 1 - (y - PADDING.top) / chartH;
+    return Math.max(0, Math.min(1, l));
+  }
+
+  function onDown(e) {
+    const { x, y } = getCSSCoords(e);
+    const idx = hitTest(x, y);
+    if (idx !== null) {
+      dragging = idx;
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+    }
+  }
+
+  function onMove(e) {
+    if (dragging === null) {
+      // Hover cursor
+      const { x, y } = getCSSCoords(e);
+      canvas.style.cursor = hitTest(x, y) !== null ? 'grab' : 'default';
+      return;
+    }
+    e.preventDefault();
+    const { y } = getCSSCoords(e);
+    const newL = yToL(y);
+    onLightnessChange(dragging, newL);
+  }
+
+  function onUp() {
+    if (dragging !== null) {
+      dragging = null;
+      canvas.style.cursor = 'default';
+    }
+  }
+
+  // Remove existing listeners by replacing canvas event handling
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+
+  // Return cleanup function
+  return () => {
+    canvas.removeEventListener('mousedown', onDown);
+    canvas.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+    canvas.removeEventListener('touchstart', onDown);
+    canvas.removeEventListener('touchmove', onMove);
+    window.removeEventListener('touchend', onUp);
+  };
 }

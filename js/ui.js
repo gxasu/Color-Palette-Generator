@@ -22,6 +22,8 @@ import {
   setBackgroundPreview,
   importPalettes,
   replaceAllPalettes,
+  updateStepName,
+  updateColorLightness,
 } from './state.js';
 
 import {
@@ -32,10 +34,11 @@ import {
   findBaseColorIndex,
 } from './color-utils.js';
 
-import { renderLightnessChart } from './chart.js';
+import { renderLightnessChart, makeChartInteractive } from './chart.js';
 import { exportToFigmaJson, importFromFigmaJson, downloadJson } from './import-export.js';
 
 let resizeObserver = null;
+let chartCleanup = null;
 let sliderDragging = false;
 
 export function initUI() {
@@ -240,14 +243,16 @@ function renderCenterPanel(state) {
     });
   });
 
-  renderSwatches(palette, colors, state);
-  renderContrastTable(palette, colors);
+  renderSwatches(palette, colors, state, stepNames);
+  renderContrastTable(palette, colors, stepNames);
+
+  const stepNames = palette.stepNames || colors.map((_, i) => String((i + 1) * 100));
 
   requestAnimationFrame(() => {
     const canvas = document.getElementById('lightness-chart');
     if (canvas) {
-      renderLightnessChart(canvas, colors, palette.baseColorIndex);
-      setupChartResize(canvas, colors, palette.baseColorIndex);
+      renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames);
+      setupChartInteractive(canvas, palette, colors, stepNames);
     }
   });
 }
@@ -332,12 +337,27 @@ function renderRightPanel(state) {
   renderBaseColorInfo(palette.baseColor);
 }
 
-function setupChartResize(canvas, colors, baseColorIndex) {
+function setupChartInteractive(canvas, palette, colors, stepNames) {
+  // Cleanup previous listeners
+  if (chartCleanup) chartCleanup();
   if (resizeObserver) resizeObserver.disconnect();
+
+  // Resize observer
   resizeObserver = new ResizeObserver(() => {
-    renderLightnessChart(canvas, colors, baseColorIndex);
+    renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames);
   });
   resizeObserver.observe(canvas.parentElement);
+
+  // Interactive drag
+  chartCleanup = makeChartInteractive(
+    canvas,
+    colors,
+    palette.baseColorIndex,
+    stepNames,
+    (colorIndex, newL) => {
+      updateColorLightness(palette.id, palette.activeModeId, colorIndex, newL);
+    }
+  );
 }
 
 function bindPropertyEvents(palette) {
@@ -448,7 +468,7 @@ function renderModeTabs(palette) {
   });
 }
 
-function renderSwatches(palette, colors, state) {
+function renderSwatches(palette, colors, state, stepNames) {
   const container = document.getElementById('color-swatches');
   if (!container) return;
 
@@ -457,11 +477,12 @@ function renderSwatches(palette, colors, state) {
     swatch.className = `color-swatch ${i === palette.baseColorIndex ? 'is-base' : ''}`;
 
     const textColor = color.L > 0.6 ? '#000000' : '#ffffff';
-    const step = (i + 1) * 100;
+    const stepName = (stepNames && stepNames[i]) || String((i + 1) * 100);
 
     swatch.innerHTML = `
       <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
-        <span class="swatch-step">${step}</span>
+        <input class="swatch-step-input" value="${escapeHtml(stepName)}"
+               style="color:${textColor}" />
         ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
       </div>
       <div class="swatch-info">
@@ -474,22 +495,30 @@ function renderSwatches(palette, colors, state) {
       updateModeColor(palette.id, palette.activeModeId, i, e.target.value);
     });
 
+    const stepInput = swatch.querySelector('.swatch-step-input');
+    stepInput.addEventListener('change', (e) => {
+      updateStepName(palette.id, i, e.target.value);
+    });
+    stepInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') e.target.blur();
+    });
+
     container.appendChild(swatch);
   });
 }
 
-function renderContrastTable(palette, colors) {
+function renderContrastTable(palette, colors, stepNames) {
   const tbody = document.getElementById('contrast-tbody');
   if (!tbody) return;
 
   colors.forEach((color, i) => {
-    const step = (i + 1) * 100;
+    const stepName = (stepNames && stepNames[i]) || String((i + 1) * 100);
     const lightCR = contrastRatio(color.hex, palette.lightBg);
     const darkCR = contrastRatio(color.hex, palette.darkBg);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="step-cell">${step}</td>
+      <td class="step-cell">${escapeHtml(stepName)}</td>
       <td>
         <div class="contrast-color-chip" style="background:${color.hex}">
           ${i === palette.baseColorIndex ? '<span class="contrast-base-dot"></span>' : ''}

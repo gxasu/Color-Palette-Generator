@@ -15,8 +15,9 @@ export function exportToFigmaJson(palettes, modeName = 'light') {
       palette.modes.find((m) => m.name === modeName) || palette.modes[0];
     const paletteObj = {};
 
+    const stepNames = palette.stepNames || [];
     mode.colors.forEach((color, i) => {
-      const step = String((i + 1) * 10);
+      const step = stepNames[i] || String((i + 1) * 100);
       const hex = color.hex.toUpperCase();
       const r = parseInt(hex.slice(1, 3), 16) / 255;
       const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -79,6 +80,7 @@ export function importFromFigmaJson(jsonString) {
 
     let baseColorIndex = Math.floor(steps.length / 2);
 
+    const importedStepNames = steps.map(([stepKey]) => stepKey);
     const colors = steps.map(([, stepData], i) => {
       const hex = stepData.$value?.hex || '#808080';
       const oklch = hexToOklch(hex);
@@ -98,6 +100,7 @@ export function importFromFigmaJson(jsonString) {
       name: key,
       baseColor,
       colorCount: colors.length,
+      stepNames: importedStepNames,
       lightnessCurve: 0.3,
       lightBg: '#ffffff',
       darkBg: '#1a1a1a',
