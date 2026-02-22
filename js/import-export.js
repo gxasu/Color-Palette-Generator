@@ -5,9 +5,8 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// Export palettes to Figma Variables JSON (DTCG) format.
-// Exports one mode at a time – Figma expects a separate file per mode.
-export function exportToFigmaJson(palettes, modeName = 'light') {
+// Export palettes to Figma Variables JSON (DTCG) format for a single mode.
+export function exportToFigmaJson(palettes, modeName = 'Default') {
   const output = {};
 
   palettes.forEach((palette) => {
@@ -22,14 +21,22 @@ export function exportToFigmaJson(palettes, modeName = 'light') {
       const r = parseInt(hex.slice(1, 3), 16) / 255;
       const g = parseInt(hex.slice(3, 5), 16) / 255;
       const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const alpha = color.alpha !== undefined ? color.alpha : 1;
+
+      // Build hex string (include alpha if < 1)
+      let hexStr = hex;
+      if (alpha < 1) {
+        const alphaHex = Math.round(alpha * 255).toString(16).padStart(2, '0').toUpperCase();
+        hexStr = hex + alphaHex;
+      }
 
       const stepObj = {
         $type: 'color',
         $value: {
           colorSpace: 'srgb',
           components: [r, g, b],
-          alpha: 1,
-          hex,
+          alpha,
+          hex: hexStr,
         },
         $extensions: {
           'com.figma.scopes': ['ALL_SCOPES'],
@@ -54,6 +61,29 @@ export function exportToFigmaJson(palettes, modeName = 'light') {
   return JSON.stringify(output, null, 2);
 }
 
+// Export all modes – returns an array of { modeName, json, filename }
+export function exportAllModes(palettes, collectionName) {
+  const modeNames = new Set();
+  palettes.forEach((p) => {
+    p.modes.forEach((m) => modeNames.add(m.name));
+  });
+
+  const base = collectionName.replace(/\s+/g, '-').toLowerCase();
+  const results = [];
+
+  modeNames.forEach((modeName) => {
+    const json = exportToFigmaJson(palettes, modeName);
+    const safeName = modeName.replace(/\s+/g, '-').toLowerCase();
+    results.push({
+      modeName,
+      json,
+      filename: `${base}-${safeName}.json`,
+    });
+  });
+
+  return results;
+}
+
 // Import from Figma Variables JSON (DTCG) format.
 export function importFromFigmaJson(jsonString) {
   const data = JSON.parse(jsonString);
@@ -65,7 +95,7 @@ export function importFromFigmaJson(jsonString) {
   }
 
   const modeName =
-    data.$extensions?.['com.figma.modeName'] || 'light';
+    data.$extensions?.['com.figma.modeName'] || 'Default';
   const palettes = [];
 
   Object.entries(data).forEach(([key, value]) => {
@@ -79,18 +109,26 @@ export function importFromFigmaJson(jsonString) {
     if (steps.length === 0) return;
 
     let baseColorIndex = Math.floor(steps.length / 2);
+    let hasAlpha = false;
 
     const importedStepNames = steps.map(([stepKey]) => stepKey);
     const colors = steps.map(([, stepData], i) => {
-      const hex = stepData.$value?.hex || '#808080';
+      const hex = (stepData.$value?.hex || '#808080').slice(0, 7); // strip alpha hex
       const oklch = hexToOklch(hex);
+      const alpha = stepData.$value?.alpha !== undefined ? stepData.$value.alpha : 1;
+
+      if (alpha < 1) hasAlpha = true;
 
       if (stepData.$description === 'Base Color') {
         baseColorIndex = i;
       }
 
-      return { ...oklch, hex };
+      return { ...oklch, hex, alpha };
     });
+
+    // Detect if this is an alpha palette (all same hex, varying alpha)
+    const allSameHex = colors.every((c) => c.hex.toUpperCase() === colors[0].hex.toUpperCase());
+    const paletteType = allSameHex && hasAlpha ? 'alpha' : 'oklch';
 
     const baseColor = colors[baseColorIndex]?.hex || '#808080';
     const modeId = generateId();
@@ -98,10 +136,11 @@ export function importFromFigmaJson(jsonString) {
     palettes.push({
       id: generateId(),
       name: key,
+      paletteType,
       baseColor,
       colorCount: colors.length,
       stepNames: importedStepNames,
-      lightnessCurve: 0.3,
+      lightnessCurve: paletteType === 'alpha' ? 0 : 0.3,
       lightBg: '#ffffff',
       darkBg: '#1a1a1a',
       baseColorIndex,
@@ -180,6 +219,7 @@ function importLegacyFormat(data) {
     palettes.push({
       id: generateId(),
       name,
+      paletteType: 'oklch',
       baseColor,
       colorCount: variables.length,
       lightnessCurve: 0.3,

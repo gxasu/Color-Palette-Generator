@@ -35,6 +35,15 @@ function generateStepNames(count) {
   return Array.from({ length: count }, (_, i) => String((i + 1) * 100));
 }
 
+function generateAlphaValues(count) {
+  return Array.from({ length: count }, (_, i) => {
+    if (count === 1) return 1;
+    const t = i / (count - 1);
+    const alpha = Math.round((0.05 + t * 0.95) * 100) / 100;
+    return alpha;
+  });
+}
+
 function getUniqueName(baseName, existingNames) {
   if (!existingNames.includes(baseName)) return baseName;
   let counter = 2;
@@ -52,9 +61,11 @@ export function createPalette(baseHex = null) {
   const colors = generatePalette(hex, 11, 0.3);
   const baseIndex = findBaseColorIndex(colors, hex);
 
+  const modeId = generateId();
   const palette = {
     id,
     name,
+    paletteType: 'oklch',
     baseColor: hex,
     colorCount: 11,
     lightnessCurve: 0.3,
@@ -64,19 +75,61 @@ export function createPalette(baseHex = null) {
     stepNames: generateStepNames(11),
     modes: [
       {
-        id: generateId(),
-        name: 'light',
+        id: modeId,
+        name: 'Default',
         colors: colors.map((c) => ({ ...c })),
       },
+    ],
+    activeModeId: modeId,
+  };
+
+  state = {
+    ...state,
+    palettes: [...state.palettes, palette],
+    selectedPaletteId: id,
+  };
+  notify();
+  return id;
+}
+
+export function createAlphaPalette(baseHex = '#ffffff') {
+  const colorName = getColorNameEn(baseHex);
+  const existingNames = state.palettes.map((p) => p.name);
+  const name = getUniqueName(colorName + '-alpha', existingNames);
+  const id = generateId();
+  const count = 11;
+
+  const oklch = hexToOklch(baseHex);
+  const alphaValues = generateAlphaValues(count);
+  const colors = alphaValues.map((alpha) => ({
+    L: oklch.L,
+    C: oklch.C,
+    h: oklch.h,
+    hex: baseHex,
+    alpha,
+  }));
+
+  const modeId = generateId();
+  const palette = {
+    id,
+    name,
+    paletteType: 'alpha',
+    baseColor: baseHex,
+    colorCount: count,
+    lightnessCurve: 0,
+    lightBg: '#ffffff',
+    darkBg: '#1a1a1a',
+    baseColorIndex: count - 1,
+    stepNames: generateStepNames(count),
+    modes: [
       {
-        id: generateId(),
-        name: 'dark',
-        colors: generatePalette(hex, 11, -0.3).map((c) => ({ ...c })),
+        id: modeId,
+        name: 'Default',
+        colors,
       },
     ],
-    activeModeId: null,
+    activeModeId: modeId,
   };
-  palette.activeModeId = palette.modes[0].id;
 
   state = {
     ...state,
@@ -115,17 +168,36 @@ export function updatePaletteBaseColor(id, hex) {
     ...state,
     palettes: state.palettes.map((p) => {
       if (p.id !== id) return p;
+
+      if (p.paletteType === 'alpha') {
+        // For alpha palettes, update hex for all colors in all modes, keep alpha
+        const oklch = hexToOklch(hex);
+        return {
+          ...p,
+          baseColor: hex,
+          modes: p.modes.map((m) => ({
+            ...m,
+            colors: m.colors.map((c) => ({
+              L: oklch.L,
+              C: oklch.C,
+              h: oklch.h,
+              hex,
+              alpha: c.alpha,
+            })),
+          })),
+        };
+      }
+
       const colors = generatePalette(hex, p.colorCount, p.lightnessCurve);
       const baseIndex = findBaseColorIndex(colors, hex);
-      const darkColors = generatePalette(hex, p.colorCount, -Math.abs(p.lightnessCurve));
       return {
         ...p,
         baseColor: hex,
         baseColorIndex: baseIndex,
         name: p.name,
-        modes: p.modes.map((m, i) => ({
+        modes: p.modes.map((m) => ({
           ...m,
-          colors: i === 0 ? colors.map((c) => ({ ...c })) : darkColors.map((c) => ({ ...c })),
+          colors: colors.map((c) => ({ ...c })),
         })),
       };
     }),
@@ -139,22 +211,45 @@ export function updatePaletteColorCount(id, count) {
     ...state,
     palettes: state.palettes.map((p) => {
       if (p.id !== id) return p;
-      const colors = generatePalette(p.baseColor, count, p.lightnessCurve);
-      const baseIndex = findBaseColorIndex(colors, p.baseColor);
-      const darkColors = generatePalette(p.baseColor, count, -Math.abs(p.lightnessCurve));
+
       // Preserve existing step names where possible, extend/truncate as needed
       const oldNames = p.stepNames || [];
       const stepNames = Array.from({ length: count }, (_, i) =>
         i < oldNames.length ? oldNames[i] : String((i + 1) * 100)
       );
+
+      if (p.paletteType === 'alpha') {
+        const oklch = hexToOklch(p.baseColor);
+        const alphaValues = generateAlphaValues(count);
+        const colors = alphaValues.map((alpha) => ({
+          L: oklch.L,
+          C: oklch.C,
+          h: oklch.h,
+          hex: p.baseColor,
+          alpha,
+        }));
+        return {
+          ...p,
+          colorCount: count,
+          baseColorIndex: count - 1,
+          stepNames,
+          modes: p.modes.map((m) => ({
+            ...m,
+            colors,
+          })),
+        };
+      }
+
+      const colors = generatePalette(p.baseColor, count, p.lightnessCurve);
+      const baseIndex = findBaseColorIndex(colors, p.baseColor);
       return {
         ...p,
         colorCount: count,
         baseColorIndex: baseIndex,
         stepNames,
-        modes: p.modes.map((m, i) => ({
+        modes: p.modes.map((m) => ({
           ...m,
-          colors: i === 0 ? colors.map((c) => ({ ...c })) : darkColors.map((c) => ({ ...c })),
+          colors: colors.map((c) => ({ ...c })),
         })),
       };
     }),
@@ -168,16 +263,16 @@ export function updateLightnessCurve(id, curve) {
     ...state,
     palettes: state.palettes.map((p) => {
       if (p.id !== id) return p;
+      if (p.paletteType === 'alpha') return p; // no curve for alpha palettes
       const colors = generatePalette(p.baseColor, p.colorCount, curve);
       const baseIndex = findBaseColorIndex(colors, p.baseColor);
-      const darkColors = generatePalette(p.baseColor, p.colorCount, -Math.abs(curve));
       return {
         ...p,
         lightnessCurve: curve,
         baseColorIndex: baseIndex,
-        modes: p.modes.map((m, i) => ({
+        modes: p.modes.map((m) => ({
           ...m,
-          colors: i === 0 ? colors.map((c) => ({ ...c })) : darkColors.map((c) => ({ ...c })),
+          colors: colors.map((c) => ({ ...c })),
         })),
       };
     }),
@@ -218,11 +313,13 @@ export function addMode(paletteId, name = 'new-mode') {
       if (p.id !== paletteId) return p;
       const existingNames = p.modes.map((m) => m.name);
       const uniqueName = getUniqueName(name, existingNames);
-      const colors = generatePalette(p.baseColor, p.colorCount, p.lightnessCurve);
+
+      // Copy colors from current active mode
+      const activeMode = p.modes.find((m) => m.id === p.activeModeId) || p.modes[0];
       const newMode = {
         id: generateId(),
         name: uniqueName,
-        colors: colors.map((c) => ({ ...c })),
+        colors: activeMode ? activeMode.colors.map((c) => ({ ...c })) : [],
       };
       return {
         ...p,
@@ -278,7 +375,7 @@ export function updateModeColor(paletteId, modeId, colorIndex, hex) {
                 ? {
                     ...m,
                     colors: m.colors.map((c, i) =>
-                      i === colorIndex ? { ...oklch, hex } : c
+                      i === colorIndex ? { ...oklch, hex, alpha: c.alpha } : c
                     ),
                   }
                 : m
@@ -328,7 +425,32 @@ export function updateColorLightness(paletteId, modeId, colorIndex, newL) {
               if (i !== colorIndex) return c;
               const mapped = gamutMapOklch(newL, c.C, c.h);
               const hex = oklchToHex(mapped.L, mapped.C, mapped.h);
-              return { L: mapped.L, C: mapped.C, h: mapped.h, hex };
+              return { L: mapped.L, C: mapped.C, h: mapped.h, hex, alpha: c.alpha };
+            }),
+          };
+        }),
+      };
+    }),
+  };
+  notify();
+}
+
+export function updateColorAlpha(paletteId, modeId, colorIndex, newAlpha) {
+  newAlpha = Math.max(0, Math.min(1, newAlpha));
+  newAlpha = Math.round(newAlpha * 100) / 100;
+  state = {
+    ...state,
+    palettes: state.palettes.map((p) => {
+      if (p.id !== paletteId) return p;
+      return {
+        ...p,
+        modes: p.modes.map((m) => {
+          if (m.id !== modeId) return m;
+          return {
+            ...m,
+            colors: m.colors.map((c, i) => {
+              if (i !== colorIndex) return c;
+              return { ...c, alpha: newAlpha };
             }),
           };
         }),

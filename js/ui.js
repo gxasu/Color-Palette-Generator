@@ -3,6 +3,7 @@ import {
   getState,
   subscribe,
   createPalette,
+  createAlphaPalette,
   selectPalette,
   deletePalette,
   updatePaletteName,
@@ -24,6 +25,7 @@ import {
   replaceAllPalettes,
   updateStepName,
   updateColorLightness,
+  updateColorAlpha,
 } from './state.js';
 
 import {
@@ -35,11 +37,12 @@ import {
 } from './color-utils.js';
 
 import { renderLightnessChart, makeChartInteractive } from './chart.js';
-import { exportToFigmaJson, importFromFigmaJson, downloadJson } from './import-export.js';
+import { exportToFigmaJson, exportAllModes, importFromFigmaJson, downloadJson } from './import-export.js';
 
 let resizeObserver = null;
 let chartCleanup = null;
 let sliderDragging = false;
+let chartDragging = false;
 
 export function initUI() {
   subscribe(render);
@@ -71,6 +74,10 @@ function setupGlobalEvents() {
     createPalette();
   });
 
+  document.getElementById('add-alpha-palette-btn').addEventListener('click', () => {
+    createAlphaPalette();
+  });
+
   document.getElementById('theme-select').addEventListener('change', (e) => {
     setTheme(e.target.value);
     applyTheme(e.target.value);
@@ -78,14 +85,10 @@ function setupGlobalEvents() {
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const state = getState();
-    const palette = getSelectedPalette();
-    const activeMode =
-      palette?.modes.find((m) => m.id === palette.activeModeId) ||
-      palette?.modes[0];
-    const modeName = activeMode?.name || 'light';
-    const json = exportToFigmaJson(state.palettes, modeName);
-    const base = state.collectionName.replace(/\s+/g, '-').toLowerCase();
-    downloadJson(json, `${base}-${modeName}.json`);
+    const results = exportAllModes(state.palettes, state.collectionName);
+    results.forEach(({ json, filename }) => {
+      downloadJson(json, filename);
+    });
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
@@ -118,12 +121,107 @@ function setupGlobalEvents() {
 
 function render(state) {
   renderPaletteCards(state);
-  renderCenterPanel(state);
-  if (!sliderDragging) {
+
+  if (chartDragging) {
+    // During chart drag, only update visuals without rebuilding DOM
+    updateCenterPanelVisuals(state);
+  } else {
+    renderCenterPanel(state);
+  }
+
+  if (!sliderDragging && !chartDragging) {
     renderRightPanel(state);
   }
   document.getElementById('theme-select').value = state.theme;
   document.getElementById('collection-name').value = state.collectionName;
+}
+
+// Lightweight update during chart drag – no DOM rebuild
+function updateCenterPanelVisuals(state) {
+  const palette = getSelectedPalette();
+  if (!palette) return;
+
+  const activeMode = palette.modes.find((m) => m.id === palette.activeModeId) || palette.modes[0];
+  const colors = activeMode ? activeMode.colors : [];
+  const stepNames = palette.stepNames || colors.map((_, i) => String((i + 1) * 100));
+  const isAlpha = palette.paletteType === 'alpha';
+  const valueKey = isAlpha ? 'alpha' : 'L';
+
+  // Re-draw chart canvas without replacing it
+  const canvas = document.getElementById('lightness-chart');
+  if (canvas) {
+    renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames, { valueKey });
+  }
+
+  // Update swatch backgrounds and hex values in place
+  const swatchEls = document.querySelectorAll('#color-swatches .color-swatch');
+  swatchEls.forEach((el, i) => {
+    if (i >= colors.length) return;
+    const color = colors[i];
+    const alpha = color.alpha !== undefined ? color.alpha : 1;
+    const textColor = isAlpha
+      ? (alpha > 0.5 ? (hexToOklch(color.hex).L > 0.6 ? '#000' : '#fff') : '#333')
+      : (color.L > 0.6 ? '#000000' : '#ffffff');
+
+    const swatchColor = el.querySelector('.swatch-color');
+    if (swatchColor) {
+      if (isAlpha) {
+        const overlay = swatchColor.querySelector('.swatch-alpha-overlay');
+        if (overlay) overlay.style.background = hexToRgba(color.hex, alpha);
+        const alphaBadge = swatchColor.querySelector('.swatch-alpha-badge');
+        if (alphaBadge) alphaBadge.textContent = Math.round(alpha * 100) + '%';
+      } else {
+        swatchColor.style.background = color.hex;
+      }
+      swatchColor.style.color = textColor;
+    }
+
+    const stepInput = el.querySelector('.swatch-step-input');
+    if (stepInput) stepInput.style.color = textColor;
+
+    const hexCode = el.querySelector('.swatch-hex');
+    if (hexCode) {
+      hexCode.textContent = isAlpha ? `${color.hex} · ${Math.round(alpha * 100)}%` : color.hex;
+    }
+  });
+
+  // Update contrast table rows
+  const rows = document.querySelectorAll('#contrast-tbody tr');
+  rows.forEach((row, i) => {
+    if (i >= colors.length) return;
+    const color = colors[i];
+    const alpha = color.alpha !== undefined ? color.alpha : 1;
+
+    const chip = row.querySelector('.contrast-color-chip');
+    if (chip) {
+      if (isAlpha) {
+        const overlay = chip.querySelector('.contrast-chip-overlay');
+        if (overlay) overlay.style.background = hexToRgba(color.hex, alpha);
+      } else {
+        chip.style.background = color.hex;
+      }
+    }
+
+    const codes = row.querySelectorAll('code');
+    if (codes[0]) codes[0].textContent = color.hex;
+    if (codes[1]) {
+      codes[1].textContent = isAlpha
+        ? `alpha: ${Math.round(alpha * 100)}%`
+        : `oklch(${color.L.toFixed(3)} ${color.C.toFixed(3)} ${color.h.toFixed(1)})`;
+    }
+
+    const lightCR = contrastRatio(color.hex, palette.lightBg);
+    const darkCR = contrastRatio(color.hex, palette.darkBg);
+    const badges = row.querySelectorAll('.contrast-badge');
+    if (badges[0]) {
+      badges[0].textContent = lightCR.toFixed(2);
+      badges[0].className = `contrast-badge ${getContrastLevel(lightCR)}`;
+    }
+    if (badges[1]) {
+      badges[1].textContent = darkCR.toFixed(2);
+      badges[1].className = `contrast-badge ${getContrastLevel(darkCR)}`;
+    }
+  });
 }
 
 // ===== Left Panel: Palette List =====
@@ -138,16 +236,23 @@ function renderPaletteCards(state) {
 
     const activeMode = palette.modes.find((m) => m.id === palette.activeModeId) || palette.modes[0];
     const colors = activeMode ? activeMode.colors : [];
+    const isAlpha = palette.paletteType === 'alpha';
 
     const colorsHtml = colors
       .map(
-        (c, i) =>
-          `<div class="card-color-chip" style="background:${c.hex}" title="${c.hex}">
+        (c, i) => {
+          const alpha = c.alpha !== undefined ? c.alpha : 1;
+          const bgStyle = isAlpha
+            ? `background:${hexToRgba(c.hex, alpha)}`
+            : `background:${c.hex}`;
+          return `<div class="card-color-chip" style="${bgStyle}" title="${c.hex}${isAlpha ? ' · ' + Math.round(alpha * 100) + '%' : ''}">
             ${i === palette.baseColorIndex ? '<span class="base-dot"></span>' : ''}
-          </div>`
+          </div>`;
+        }
       )
       .join('');
 
+    const typeLabel = isAlpha ? ' · Alpha' : '';
     card.innerHTML = `
       <div class="card-header">
         <input class="card-name-input" value="${escapeHtml(palette.name)}"
@@ -156,8 +261,8 @@ function renderPaletteCards(state) {
           <md-icon>close</md-icon>
         </md-icon-button>
       </div>
-      <div class="card-colors">${colorsHtml}</div>
-      <div class="card-meta">${colors.length}色 · ${palette.modes.length}モード</div>
+      <div class="card-colors${isAlpha ? ' alpha-card-colors' : ''}">${colorsHtml}</div>
+      <div class="card-meta">${colors.length}色 · ${palette.modes.length}モード${typeLabel}</div>
     `;
 
     const nameInput = card.querySelector('.card-name-input');
@@ -194,6 +299,9 @@ function renderCenterPanel(state) {
 
   const activeMode = palette.modes.find((m) => m.id === palette.activeModeId) || palette.modes[0];
   const colors = activeMode ? activeMode.colors : [];
+  const isAlpha = palette.paletteType === 'alpha';
+  const chartTitle = isAlpha ? '透明度チャート' : '明度チャート';
+  const infoColTitle = isAlpha ? 'Alpha' : 'OKLCH';
 
   container.innerHTML = `
     <div class="editor-section">
@@ -210,7 +318,7 @@ function renderCenterPanel(state) {
     </div>
 
     <div class="editor-section">
-      <span class="section-title">明度チャート</span>
+      <span class="section-title">${chartTitle}</span>
       <div class="chart-container">
         <canvas id="lightness-chart"></canvas>
       </div>
@@ -225,7 +333,7 @@ function renderCenterPanel(state) {
               <th>ステップ</th>
               <th>カラー</th>
               <th>HEX</th>
-              <th class="oklch-cell">OKLCH</th>
+              <th class="oklch-cell">${infoColTitle}</th>
               <th>ライト背景</th>
               <th>ダーク背景</th>
             </tr>
@@ -251,7 +359,8 @@ function renderCenterPanel(state) {
   requestAnimationFrame(() => {
     const canvas = document.getElementById('lightness-chart');
     if (canvas) {
-      renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames);
+      const valueKey = isAlpha ? 'alpha' : 'L';
+      renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames, { valueKey });
       setupChartInteractive(canvas, palette, colors, stepNames);
     }
   });
@@ -270,6 +379,17 @@ function renderRightPanel(state) {
       </div>`;
     return;
   }
+
+  const isAlpha = palette.paletteType === 'alpha';
+
+  const curveSection = isAlpha ? '' : `
+        <div class="setting-item">
+          <label>明度カーブ</label>
+          <div class="setting-control">
+            <md-slider id="lightness-curve-range" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" labeled></md-slider>
+            <input type="number" id="lightness-curve-input" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" class="number-input" />
+          </div>
+        </div>`;
 
   container.innerHTML = `
     <div class="editor-section">
@@ -297,13 +417,7 @@ function renderRightPanel(state) {
             <input type="number" id="color-count-input" min="2" max="20" value="${palette.colorCount}" class="number-input" />
           </div>
         </div>
-        <div class="setting-item">
-          <label>明度カーブ</label>
-          <div class="setting-control">
-            <md-slider id="lightness-curve-range" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" labeled></md-slider>
-            <input type="number" id="lightness-curve-input" min="-100" max="100" value="${Math.round(palette.lightnessCurve * 100)}" step="1" class="number-input" />
-          </div>
-        </div>
+        ${curveSection}
         <div class="setting-item">
           <label>ライト背景</label>
           <div class="bg-color-control">
@@ -342,9 +456,18 @@ function setupChartInteractive(canvas, palette, colors, stepNames) {
   if (chartCleanup) chartCleanup();
   if (resizeObserver) resizeObserver.disconnect();
 
-  // Resize observer
+  const isAlpha = palette.paletteType === 'alpha';
+  const valueKey = isAlpha ? 'alpha' : 'L';
+
+  // Resize observer – get fresh colors from state
   resizeObserver = new ResizeObserver(() => {
-    renderLightnessChart(canvas, colors, palette.baseColorIndex, stepNames);
+    const p = getSelectedPalette();
+    if (!p) return;
+    const mode = p.modes.find((m) => m.id === p.activeModeId) || p.modes[0];
+    const c = mode ? mode.colors : [];
+    const sn = p.stepNames || c.map((_, i) => String((i + 1) * 100));
+    const vk = p.paletteType === 'alpha' ? 'alpha' : 'L';
+    renderLightnessChart(canvas, c, p.baseColorIndex, sn, { valueKey: vk });
   });
   resizeObserver.observe(canvas.parentElement);
 
@@ -354,14 +477,28 @@ function setupChartInteractive(canvas, palette, colors, stepNames) {
     colors,
     palette.baseColorIndex,
     stepNames,
-    (colorIndex, newL) => {
-      updateColorLightness(palette.id, palette.activeModeId, colorIndex, newL);
+    (colorIndex, newVal) => {
+      if (isAlpha) {
+        updateColorAlpha(palette.id, palette.activeModeId, colorIndex, newVal);
+      } else {
+        updateColorLightness(palette.id, palette.activeModeId, colorIndex, newVal);
+      }
+    },
+    {
+      valueKey,
+      onDragStart: () => { chartDragging = true; },
+      onDragEnd: () => {
+        chartDragging = false;
+        // Full re-render to sync everything
+        render(getState());
+      },
     }
   );
 }
 
 function bindPropertyEvents(palette) {
   const id = palette.id;
+  const isAlpha = palette.paletteType === 'alpha';
 
   // Base color
   document.getElementById('base-color-picker').addEventListener('input', (e) => {
@@ -392,23 +529,27 @@ function bindPropertyEvents(palette) {
     updatePaletteColorCount(id, val);
   });
 
-  // Lightness curve (md-slider)
-  const curveSlider = document.getElementById('lightness-curve-range');
-  const curveInput = document.getElementById('lightness-curve-input');
-  curveSlider.addEventListener('input', (e) => {
-    sliderDragging = true;
-    curveInput.value = e.target.value;
-    updateLightnessCurve(id, parseInt(e.target.value) / 100);
-  });
-  curveSlider.addEventListener('change', (e) => {
-    sliderDragging = false;
-    updateLightnessCurve(id, parseInt(e.target.value) / 100);
-  });
-  curveInput.addEventListener('change', (e) => {
-    const val = parseInt(e.target.value);
-    curveSlider.value = val;
-    updateLightnessCurve(id, val / 100);
-  });
+  // Lightness curve (md-slider) – only for non-alpha palettes
+  if (!isAlpha) {
+    const curveSlider = document.getElementById('lightness-curve-range');
+    const curveInput = document.getElementById('lightness-curve-input');
+    if (curveSlider && curveInput) {
+      curveSlider.addEventListener('input', (e) => {
+        sliderDragging = true;
+        curveInput.value = e.target.value;
+        updateLightnessCurve(id, parseInt(e.target.value) / 100);
+      });
+      curveSlider.addEventListener('change', (e) => {
+        sliderDragging = false;
+        updateLightnessCurve(id, parseInt(e.target.value) / 100);
+      });
+      curveInput.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value);
+        curveSlider.value = val;
+        updateLightnessCurve(id, val / 100);
+      });
+    }
+  }
 
   // Background colors
   document.getElementById('light-bg-picker').addEventListener('input', (e) => {
@@ -472,24 +613,50 @@ function renderSwatches(palette, colors, state, stepNames) {
   const container = document.getElementById('color-swatches');
   if (!container) return;
 
+  const isAlpha = palette.paletteType === 'alpha';
+
   colors.forEach((color, i) => {
     const swatch = document.createElement('div');
     swatch.className = `color-swatch ${i === palette.baseColorIndex ? 'is-base' : ''}`;
 
-    const textColor = color.L > 0.6 ? '#000000' : '#ffffff';
+    const alpha = color.alpha !== undefined ? color.alpha : 1;
     const stepName = (stepNames && stepNames[i]) || String((i + 1) * 100);
 
-    swatch.innerHTML = `
-      <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
-        <input class="swatch-step-input" value="${escapeHtml(stepName)}"
-               style="color:${textColor}" />
-        ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
-      </div>
-      <div class="swatch-info">
-        <input type="color" class="swatch-picker" value="${color.hex}" />
-        <code class="swatch-hex">${color.hex}</code>
-      </div>
-    `;
+    if (isAlpha) {
+      // Alpha swatch with checkerboard
+      const textColor = alpha > 0.5
+        ? (hexToOklch(color.hex).L > 0.6 ? '#000' : '#fff')
+        : '#333';
+
+      swatch.innerHTML = `
+        <div class="swatch-color alpha-swatch" style="color:${textColor}">
+          <div class="swatch-alpha-overlay" style="background:${hexToRgba(color.hex, alpha)}">
+            <input class="swatch-step-input" value="${escapeHtml(stepName)}"
+                   style="color:${textColor}" />
+            <span class="swatch-alpha-badge" style="color:${textColor}">${Math.round(alpha * 100)}%</span>
+            ${i === palette.baseColorIndex ? `<span class="swatch-base-badge" style="color:${textColor}">ベース</span>` : ''}
+          </div>
+        </div>
+        <div class="swatch-info">
+          <input type="color" class="swatch-picker" value="${color.hex}" />
+          <code class="swatch-hex">${color.hex} · ${Math.round(alpha * 100)}%</code>
+        </div>
+      `;
+    } else {
+      const textColor = color.L > 0.6 ? '#000000' : '#ffffff';
+
+      swatch.innerHTML = `
+        <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
+          <input class="swatch-step-input" value="${escapeHtml(stepName)}"
+                 style="color:${textColor}" />
+          ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
+        </div>
+        <div class="swatch-info">
+          <input type="color" class="swatch-picker" value="${color.hex}" />
+          <code class="swatch-hex">${color.hex}</code>
+        </div>
+      `;
+    }
 
     swatch.querySelector('.swatch-picker').addEventListener('input', (e) => {
       updateModeColor(palette.id, palette.activeModeId, i, e.target.value);
@@ -511,21 +678,35 @@ function renderContrastTable(palette, colors, stepNames) {
   const tbody = document.getElementById('contrast-tbody');
   if (!tbody) return;
 
+  const isAlpha = palette.paletteType === 'alpha';
+
   colors.forEach((color, i) => {
     const stepName = (stepNames && stepNames[i]) || String((i + 1) * 100);
     const lightCR = contrastRatio(color.hex, palette.lightBg);
     const darkCR = contrastRatio(color.hex, palette.darkBg);
+    const alpha = color.alpha !== undefined ? color.alpha : 1;
 
     const tr = document.createElement('tr');
+
+    const colorChipHtml = isAlpha
+      ? `<div class="contrast-color-chip alpha-chip">
+           <div class="contrast-chip-overlay" style="background:${hexToRgba(color.hex, alpha)}">
+             ${i === palette.baseColorIndex ? '<span class="contrast-base-dot"></span>' : ''}
+           </div>
+         </div>`
+      : `<div class="contrast-color-chip" style="background:${color.hex}">
+           ${i === palette.baseColorIndex ? '<span class="contrast-base-dot"></span>' : ''}
+         </div>`;
+
+    const infoHtml = isAlpha
+      ? `<code>alpha: ${Math.round(alpha * 100)}%</code>`
+      : `<code>oklch(${color.L.toFixed(3)} ${color.C.toFixed(3)} ${color.h.toFixed(1)})</code>`;
+
     tr.innerHTML = `
       <td class="step-cell">${escapeHtml(stepName)}</td>
-      <td>
-        <div class="contrast-color-chip" style="background:${color.hex}">
-          ${i === palette.baseColorIndex ? '<span class="contrast-base-dot"></span>' : ''}
-        </div>
-      </td>
+      <td>${colorChipHtml}</td>
       <td><code>${color.hex}</code></td>
-      <td class="oklch-cell"><code>oklch(${color.L.toFixed(3)} ${color.C.toFixed(3)} ${color.h.toFixed(1)})</code></td>
+      <td class="oklch-cell">${infoHtml}</td>
       <td>
         <span class="contrast-badge ${getContrastLevel(lightCR)}">${lightCR.toFixed(2)}</span>
       </td>
@@ -553,6 +734,13 @@ function getContrastLevel(ratio) {
   if (ratio >= 4.5) return 'level-aa';
   if (ratio >= 3) return 'level-a';
   return 'level-fail';
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function escapeHtml(str) {
