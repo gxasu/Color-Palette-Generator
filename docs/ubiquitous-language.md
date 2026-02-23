@@ -73,3 +73,9 @@ Writing Supervisor が管理するプロジェクト共通用語の定義。
 | Figma Variables | Figma のデザイン変数システム。色、数値等を Mode 付きで管理。 |
 | M3 / Material Design 3 | Google のデザインシステム第3版。本アプリの UI フレームワーク。 |
 | PWA | Progressive Web App。オフライン動作、ホーム画面追加が可能なウェブアプリ。 |
+| HEX | 16進数カラーコード。`#` + 6桁（例: `#ff0000`）。sRGB 色空間の表現形式。 |
+| sRGB | Standard RGB。Web およびディスプレイの標準色空間。 |
+| タッチターゲット | Touch Target。タッチ操作可能な領域。M3 ガイドラインでは最小 48dp。 |
+| フォーカスリング | Focus Ring。キーボードフォーカス時の視覚的インジケーター。`:focus-visible` で実装。 |
+| デバウンス | Debounce。連続イベントの最後の発火のみを処理する最適化手法。 |
+| サニタイズ | Sanitize。外部入力値を安全な形式に変換・検証する処理。XSS 防止に必須。 |

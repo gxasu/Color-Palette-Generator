@@ -22,13 +22,16 @@ export function subscribe(listener) {
   };
 }
 
+let saveTimer = null;
+
 function notify() {
   listeners.forEach((l) => l(state));
-  saveToLocalStorage();
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToLocalStorage, 300);
 }
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
 }
 
 function generateStepNames(count) {

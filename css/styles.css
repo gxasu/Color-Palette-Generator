@@ -540,7 +540,7 @@ body {
   font-size: 0.6875rem;
   font-weight: 400;
   color: var(--md-sys-color-on-surface-variant);
-  margin-top: 6px;
+  margin-top: 4px;
   letter-spacing: 0.04em;
 }
 
@@ -607,7 +607,7 @@ body {
 .base-color-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .color-picker-wrapper {
@@ -666,9 +666,9 @@ body {
 .color-info-oklch {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .info-label {
@@ -758,7 +758,7 @@ body {
 .modes-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -1000,19 +1000,30 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px;
+  padding: 4px;
   background: var(--md-sys-color-surface-container-lowest);
 }
 
 .swatch-picker {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-xs);
   cursor: pointer;
   padding: 1px;
   background: transparent;
   flex-shrink: 0;
+  position: relative;
+}
+
+/* 48dp touch target */
+.swatch-picker::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .swatch-hex {
@@ -1254,8 +1265,8 @@ md-divider {
 
   .color-swatches {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 6px;
-    padding: 10px;
+    gap: 4px;
+    padding: 8px;
   }
 
   .swatch-color {
@@ -1322,7 +1333,48 @@ md-divider {
   outline-offset: 2px;
 }
 
-input:focus-visible,
+/* Inputs with custom border-based focus already handle their own styles */
+.md-input:focus-visible,
+.md-input-compact:focus-visible,
+.hex-input:focus-visible,
 select:focus-visible {
   outline: none;
+}
+
+/* Custom inline-edit inputs need visible keyboard focus */
+.mode-name-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+  border-radius: var(--md-sys-shape-xs);
+}
+
+.swatch-step-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+  border-radius: var(--md-sys-shape-xs);
+}
+
+.card-name-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.number-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.bg-toggle-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.mode-add-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.mode-delete-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }

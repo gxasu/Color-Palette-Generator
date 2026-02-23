@@ -245,32 +245,7 @@ export function randomColor() {
   return oklchToHex(mapped.L, mapped.C, mapped.h);
 }
 
-// Get a color name approximation based on hue
-export function getColorName(hex) {
-  const { h, C, L } = hexToOklch(hex);
-  if (C < 0.04) {
-    if (L < 0.2) return 'ブラック';
-    if (L > 0.85) return 'ホワイト';
-    return 'グレー';
-  }
-  const hueNames = [
-    [15, '赤'],
-    [45, 'オレンジ'],
-    [75, '黄'],
-    [150, '緑'],
-    [210, 'シアン'],
-    [260, '青'],
-    [310, '紫'],
-    [345, 'ピンク'],
-    [360, '赤'],
-  ];
-  for (const [boundary, name] of hueNames) {
-    if (h <= boundary) return name;
-  }
-  return '赤';
-}
-
-// Get an English color name for export keys
+// Get an English color name for palette naming
 export function getColorNameEn(hex) {
   const { h, C, L } = hexToOklch(hex);
   if (C < 0.04) {

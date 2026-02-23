@@ -90,3 +90,33 @@ Material Design 3 ガイドラインに基づく全 UI 決定を記録する。
 **コンテキスト**: スウォッチの背景切り替え。
 **決定**: Segmented Button 風のトグル（2 ボタン）。Active 状態は Primary 色。
 **根拠**: M3 Segmented Button パターンに準拠。2 択のバイナリ切り替えに最適。
+
+---
+
+## DDR-009: カスタム入力の :focus-visible スタイル
+
+**日付**: 2025-02
+**ステータス**: 採用
+**コンテキスト**: `.mode-name-input`、`.swatch-step-input`、`.card-name-input` 等のインライン編集入力は `border: none; outline: none` スタイルのため、キーボードフォーカスが視認不可能。WCAG 2.4.7（Focus Visible）違反。
+**決定**: `:focus-visible` 擬似クラスで `outline: 2px solid var(--md-sys-color-primary)` を各カスタム入力に個別追加。マウスフォーカスは影響なし。
+**根拠**: M3 の Focus Ring ガイドラインに準拠。`:focus-visible` はキーボードナビゲーション時のみ発火し、マウスクリック時の不要なフォーカスリングを回避。
+
+---
+
+## DDR-010: タッチターゲット 48dp の徹底
+
+**日付**: 2025-02
+**ステータス**: 採用
+**コンテキスト**: `.swatch-picker`（カラーピッカー）の視覚サイズは 20px だが、タッチターゲットが M3 の最小 48dp に未達。
+**決定**: `::after` 擬似要素による 48x48px の透明タッチエリアを追加。視覚サイズは変更なし。
+**根拠**: M3 Touch Target ガイドライン（最小 48dp）に準拠。既に `.card-delete-btn`、`.mode-delete-btn`、`.mode-add-btn` で同パターンを採用済み。統一性を確保。
+
+---
+
+## DDR-011: 4dp グリッドへのスペーシング統一
+
+**日付**: 2025-02
+**ステータス**: 採用
+**コンテキスト**: 一部のスペーシング値（gap: 6px, 10px、margin-top: 6px、padding: 5px 等）が M3 の 4dp グリッドに非準拠。
+**決定**: 全スペーシング値を 4dp の倍数（4px, 8px, 12px, 16px...）に統一。
+**影響範囲**: `.base-color-row` gap 10→8、`.card-meta` margin 6→4、`.color-info-oklch` gap 6→8 / margin 10→8、`.modes-bar` gap 6→8、`.swatch-info` padding 5→4、レスポンシブ `.color-swatches` gap 6→4 / padding 10→8。
