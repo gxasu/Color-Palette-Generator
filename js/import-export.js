@@ -3,12 +3,21 @@
 //   $value = default mode, $extensions["com.figma.mode.<name>"] = additional modes
 import { hexToOklch } from './color-utils.js';
 
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function sanitizeHex(value) {
+  if (typeof value === 'string' && HEX_RE.test(value.slice(0, 7))) {
+    return value.slice(0, 7);
+  }
+  return '#808080';
+}
+
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
 }
 
 function colorToComponents(color) {
-  const hex = color.hex.toUpperCase();
+  const hex = sanitizeHex(color.hex).toUpperCase();
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -123,7 +132,7 @@ export function importFromFigmaJson(jsonString) {
 
     const steps = Object.entries(value)
       .filter(([k]) => !k.startsWith('$'))
-      .sort(([a], [b]) => parseInt(a) - parseInt(b));
+      .sort(([a], [b]) => parseInt(a, 10) - parseInt(b, 10));
 
     if (steps.length === 0) return;
 
@@ -159,7 +168,7 @@ export function importFromFigmaJson(jsonString) {
             stepData.$value;
         }
 
-        const hex = (colorValue?.hex || '#808080').slice(0, 7);
+        const hex = sanitizeHex(colorValue?.hex);
         const oklch = hexToOklch(hex);
         const alpha =
           colorValue?.alpha !== undefined ? colorValue.alpha : 1;
@@ -223,8 +232,8 @@ function importLegacyFormat(data) {
 
   Object.entries(paletteGroups).forEach(([name, variables]) => {
     variables.sort((a, b) => {
-      const aStep = parseInt(a.name.split('/').pop()) || 0;
-      const bStep = parseInt(b.name.split('/').pop()) || 0;
+      const aStep = parseInt(a.name.split('/').pop(), 10) || 0;
+      const bStep = parseInt(b.name.split('/').pop(), 10) || 0;
       return aStep - bStep;
     });
 
@@ -238,7 +247,7 @@ function importLegacyFormat(data) {
         const r = Math.round((value.r || 0) * 255);
         const g = Math.round((value.g || 0) * 255);
         const b = Math.round((value.b || 0) * 255);
-        const hex =
+        const hex = sanitizeHex(
           '#' +
           [r, g, b]
             .map((c) =>
@@ -246,7 +255,8 @@ function importLegacyFormat(data) {
                 .toString(16)
                 .padStart(2, '0')
             )
-            .join('');
+            .join('')
+        );
         const oklch = hexToOklch(hex);
         return { ...oklch, hex };
       });
@@ -293,5 +303,6 @@ export function downloadJson(content, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // E17: Delay revocation to ensure browser has started the download
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

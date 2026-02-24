@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -31,12 +32,12 @@
       </div>
       <div class="header-actions">
         <md-filled-tonal-button id="import-btn" title="JSONインポート">
-          <md-icon slot="icon">download</md-icon>
+          <md-icon slot="icon">upload</md-icon>
           インポート
         </md-filled-tonal-button>
         <input type="file" id="import-file" accept=".json" hidden />
         <md-filled-tonal-button id="export-btn" title="JSONエクスポート">
-          <md-icon slot="icon">upload</md-icon>
+          <md-icon slot="icon">download</md-icon>
           エクスポート
         </md-filled-tonal-button>
         <select id="theme-select" class="md-select" title="テーマ">
@@ -50,7 +51,7 @@
 
   <main class="app-main">
     <!-- 左パネル: パレット一覧 -->
-    <aside class="panel-left">
+    <aside class="panel-left" aria-label="パレット一覧">
       <div class="panel-header">
         <span class="title-small">パレット一覧</span>
         <div class="panel-header-actions">
@@ -64,7 +65,7 @@
           </md-filled-tonal-button>
         </div>
       </div>
-      <div class="palette-list" id="palette-cards"></div>
+      <div class="palette-list" id="palette-cards" role="listbox" aria-label="パレット一覧"></div>
     </aside>
 
     <!-- 中央パネル: スウォッチ・チャート・コントラスト -->
@@ -76,7 +77,7 @@
     </section>
 
     <!-- 右パネル: プロパティ -->
-    <aside class="panel-right" id="panel-right">
+    <aside class="panel-right" id="panel-right" aria-label="プロパティ">
       <div class="empty-state">
         <md-icon class="empty-icon">tune</md-icon>
         <p>パレットを選択してください。</p>

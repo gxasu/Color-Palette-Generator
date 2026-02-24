@@ -111,6 +111,8 @@ export function renderLightnessChart(canvas, colors, baseColorIndex, stepNames, 
 export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, onValueChange, options = {}) {
   const { valueKey = 'L', onDragStart, onDragEnd } = options;
   let dragging = null; // index of point being dragged
+  let rafPending = false;
+  let pendingY = null;
 
   function getCSSCoords(e) {
     const rect = canvas.getBoundingClientRect();
@@ -162,14 +164,22 @@ export function makeChartInteractive(canvas, colors, baseColorIndex, stepNames, 
       return;
     }
     e.preventDefault();
-    const { y } = getCSSCoords(e);
-    const newVal = yToValue(y);
-    onValueChange(dragging, newVal);
+    pendingY = getCSSCoords(e).y;
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        if (dragging !== null && pendingY !== null) {
+          onValueChange(dragging, yToValue(pendingY));
+        }
+      });
+    }
   }
 
   function onUp() {
     if (dragging !== null) {
       dragging = null;
+      pendingY = null;
       canvas.style.cursor = 'default';
       if (onDragEnd) onDragEnd();
     }

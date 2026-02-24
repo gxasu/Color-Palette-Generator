@@ -496,7 +496,8 @@ body {
   height: 48px;
 }
 
-.palette-card:hover .card-delete-btn {
+.palette-card:hover .card-delete-btn,
+.palette-card:focus-within .card-delete-btn {
   display: inline-flex;
 }
 
@@ -540,7 +541,7 @@ body {
   font-size: 0.6875rem;
   font-weight: 400;
   color: var(--md-sys-color-on-surface-variant);
-  margin-top: 6px;
+  margin-top: 4px;
   letter-spacing: 0.04em;
 }
 
@@ -581,6 +582,19 @@ body {
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* ===== Visually Hidden (Screen reader only) ===== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ===== Empty State ===== */
 .empty-state {
   display: flex;
@@ -607,7 +621,7 @@ body {
 .base-color-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .color-picker-wrapper {
@@ -666,9 +680,9 @@ body {
 .color-info-oklch {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .info-label {
@@ -758,7 +772,7 @@ body {
 .modes-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -1000,19 +1014,30 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 5px;
+  padding: 4px;
   background: var(--md-sys-color-surface-container-lowest);
 }
 
 .swatch-picker {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-sys-shape-xs);
   cursor: pointer;
   padding: 1px;
   background: transparent;
   flex-shrink: 0;
+  position: relative;
+}
+
+/* 48dp touch target */
+.swatch-picker::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
 }
 
 .swatch-hex {
@@ -1254,8 +1279,8 @@ md-divider {
 
   .color-swatches {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 6px;
-    padding: 10px;
+    gap: 4px;
+    padding: 8px;
   }
 
   .swatch-color {
@@ -1292,6 +1317,54 @@ md-divider {
   }
 }
 
+/* ===== Snackbar (M3) ===== */
+.snackbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  padding: 12px 24px;
+  border-radius: var(--md-sys-shape-xs);
+  font-size: 0.875rem;
+  color: var(--md-sys-color-inverse-on-surface);
+  background: var(--md-sys-color-inverse-surface);
+  box-shadow: var(--md-sys-elevation-3);
+  z-index: 1000;
+  opacity: 0;
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), opacity 300ms;
+  max-width: calc(100% - 48px);
+}
+
+.snackbar.snackbar-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.snackbar-error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .color-swatch:hover {
+    transform: none;
+  }
+
+  .snackbar {
+    transition: none;
+  }
+}
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 4px;
@@ -1322,7 +1395,48 @@ md-divider {
   outline-offset: 2px;
 }
 
-input:focus-visible,
+/* Inputs with custom border-based focus already handle their own styles */
+.md-input:focus-visible,
+.md-input-compact:focus-visible,
+.hex-input:focus-visible,
 select:focus-visible {
   outline: none;
+}
+
+/* Custom inline-edit inputs need visible keyboard focus */
+.mode-name-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+  border-radius: var(--md-sys-shape-xs);
+}
+
+.swatch-step-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+  border-radius: var(--md-sys-shape-xs);
+}
+
+.card-name-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.number-input:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -1px;
+}
+
+.bg-toggle-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.mode-add-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.mode-delete-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }

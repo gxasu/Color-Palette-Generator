@@ -44,6 +44,10 @@ let chartCleanup = null;
 let sliderDragging = false;
 let chartDragging = false;
 
+// Focus restoration targets for keyboard navigation
+let pendingFocusPaletteId = null;
+let pendingFocusModeId = null;
+
 export function initUI() {
   subscribe(render);
   setupThemeToggle();
@@ -85,6 +89,7 @@ function setupGlobalEvents() {
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const state = getState();
+    if (state.palettes.length === 0) return;
     const json = exportToFigmaJson(state.palettes);
     const base = state.collectionName.replace(/\s+/g, '-').toLowerCase();
     downloadJson(json, `${base}.json`);
@@ -105,9 +110,13 @@ function setupGlobalEvents() {
         if (result.collectionName) {
           setCollectionName(result.collectionName);
         }
+        showSnackbar(`${result.palettes.length}件のパレットをインポートしました`, 'success');
       } catch (err) {
-        alert('インポートに失敗しました: ' + err.message);
+        showSnackbar('インポートに失敗しました: ' + err.message, 'error');
       }
+    };
+    reader.onerror = () => {
+      showSnackbar('ファイルの読み込みに失敗しました', 'error');
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -116,6 +125,26 @@ function setupGlobalEvents() {
   document.getElementById('collection-name').addEventListener('change', (e) => {
     setCollectionName(e.target.value);
   });
+}
+
+// ===== Snackbar (M3) =====
+function showSnackbar(message, type = 'info') {
+  const existing = document.querySelector('.snackbar');
+  if (existing) existing.remove();
+
+  const snackbar = document.createElement('div');
+  snackbar.className = `snackbar snackbar-${type}`;
+  snackbar.setAttribute('role', 'status');
+  snackbar.setAttribute('aria-live', 'polite');
+  snackbar.textContent = message;
+  document.body.appendChild(snackbar);
+
+  requestAnimationFrame(() => snackbar.classList.add('snackbar-visible'));
+
+  setTimeout(() => {
+    snackbar.classList.remove('snackbar-visible');
+    setTimeout(() => snackbar.remove(), 300);
+  }, 4000);
 }
 
 function render(state) {
@@ -133,6 +162,14 @@ function render(state) {
   }
   document.getElementById('theme-select').value = state.theme;
   document.getElementById('collection-name').value = state.collectionName;
+
+  // Disable export when no palettes (V23)
+  const exportBtn = document.getElementById('export-btn');
+  if (state.palettes.length === 0) {
+    exportBtn.setAttribute('disabled', '');
+  } else {
+    exportBtn.removeAttribute('disabled');
+  }
 }
 
 // Lightweight update during chart drag – no DOM rebuild
@@ -228,10 +265,51 @@ function renderPaletteCards(state) {
   const container = document.getElementById('palette-cards');
   container.innerHTML = '';
 
-  state.palettes.forEach((palette) => {
+  state.palettes.forEach((palette, index) => {
+    const isSelected = palette.id === state.selectedPaletteId;
     const card = document.createElement('div');
-    card.className = `palette-card ${palette.id === state.selectedPaletteId ? 'selected' : ''}`;
+    card.className = `palette-card ${isSelected ? 'selected' : ''}`;
+    card.dataset.paletteId = palette.id;
+
+    // ARIA: listbox option pattern with roving tabindex
+    card.setAttribute('role', 'option');
+    card.setAttribute('aria-selected', String(isSelected));
+    card.setAttribute('tabindex', isSelected ? '0' : '-1');
+
     card.addEventListener('click', () => selectPalette(palette.id));
+
+    // Keyboard navigation (roving tabindex in listbox)
+    card.addEventListener('keydown', (e) => {
+      if (e.target.classList.contains('card-name-input')) return;
+      const palettes = state.palettes;
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
+          if (index < palettes.length - 1) {
+            pendingFocusPaletteId = palettes[index + 1].id;
+            selectPalette(pendingFocusPaletteId);
+          }
+          break;
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (index > 0) {
+            pendingFocusPaletteId = palettes[index - 1].id;
+            selectPalette(pendingFocusPaletteId);
+          }
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          selectPalette(palette.id);
+          break;
+        case 'Delete':
+          e.preventDefault();
+          deletePalette(palette.id);
+          break;
+      }
+    });
 
     const activeMode = palette.modes.find((m) => m.id === palette.activeModeId) || palette.modes[0];
     const colors = activeMode ? activeMode.colors : [];
@@ -252,11 +330,11 @@ function renderPaletteCards(state) {
       .join('');
 
     const typeLabel = isAlpha ? ' · Alpha' : '';
+    // E15: No inline onclick handlers
     card.innerHTML = `
       <div class="card-header">
-        <input class="card-name-input" value="${escapeHtml(palette.name)}"
-               onclick="event.stopPropagation()" />
-        <md-icon-button class="card-delete-btn" title="パレットを削除" onclick="event.stopPropagation()">
+        <input class="card-name-input" value="${escapeHtml(palette.name)}" aria-label="パレット名" />
+        <md-icon-button class="card-delete-btn" title="パレットを削除" aria-label="パレットを削除">
           <md-icon>close</md-icon>
         </md-icon-button>
       </div>
@@ -264,22 +342,33 @@ function renderPaletteCards(state) {
       <div class="card-meta">${colors.length}色 · ${palette.modes.length}モード${typeLabel}</div>
     `;
 
+    // E15: Use addEventListener instead of inline onclick for stopPropagation
     const nameInput = card.querySelector('.card-name-input');
+    nameInput.addEventListener('click', (e) => e.stopPropagation());
     nameInput.addEventListener('change', (e) => {
       e.stopPropagation();
       updatePaletteName(palette.id, e.target.value);
     });
     nameInput.addEventListener('keydown', (e) => {
+      e.stopPropagation();
       if (e.key === 'Enter') e.target.blur();
     });
 
-    card.querySelector('.card-delete-btn').addEventListener('click', (e) => {
+    const deleteBtn = card.querySelector('.card-delete-btn');
+    deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       deletePalette(palette.id);
     });
 
     container.appendChild(card);
   });
+
+  // Restore focus after DOM rebuild (keyboard navigation)
+  if (pendingFocusPaletteId) {
+    const target = container.querySelector(`[data-palette-id="${pendingFocusPaletteId}"]`);
+    if (target) target.focus();
+    pendingFocusPaletteId = null;
+  }
 }
 
 // ===== Center Panel: Swatches, Chart, Contrast =====
@@ -306,9 +395,11 @@ function renderCenterPanel(state) {
     <div class="editor-section">
       <div class="preview-toggle-row">
         <span class="section-title" style="margin-bottom:0">カラースウォッチ</span>
-        <div class="preview-bg-toggle">
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light">ライト</button>
-          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark">ダーク</button>
+        <div class="preview-bg-toggle" role="group" aria-label="背景プレビュー切り替え">
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light"
+                  aria-pressed="${state.backgroundPreview === 'light' ? 'true' : 'false'}">ライト</button>
+          <button class="bg-toggle-btn ${state.backgroundPreview === 'dark' ? 'active' : ''}" data-bg="dark"
+                  aria-pressed="${state.backgroundPreview === 'dark' ? 'true' : 'false'}">ダーク</button>
         </div>
       </div>
       <div class="color-swatches" id="color-swatches"
@@ -319,7 +410,7 @@ function renderCenterPanel(state) {
     <div class="editor-section">
       <span class="section-title">${chartTitle}</span>
       <div class="chart-container">
-        <canvas id="lightness-chart"></canvas>
+        <canvas id="lightness-chart" role="img" aria-label="${chartTitle} — ${colors.length}ステップ"></canvas>
       </div>
     </div>
 
@@ -327,14 +418,15 @@ function renderCenterPanel(state) {
       <span class="section-title">コントラスト比</span>
       <div class="contrast-table-wrapper">
         <table class="contrast-table" id="contrast-table">
+          <caption class="visually-hidden">各ステップのライト背景・ダーク背景に対するコントラスト比</caption>
           <thead>
             <tr>
-              <th>ステップ</th>
-              <th>カラー</th>
-              <th>HEX</th>
-              <th class="oklch-cell">${infoColTitle}</th>
-              <th>ライト背景</th>
-              <th>ダーク背景</th>
+              <th scope="col">ステップ</th>
+              <th scope="col">カラー</th>
+              <th scope="col">HEX</th>
+              <th scope="col" class="oklch-cell">${infoColTitle}</th>
+              <th scope="col">ライト背景</th>
+              <th scope="col">ダーク背景</th>
             </tr>
           </thead>
           <tbody id="contrast-tbody"></tbody>
@@ -395,11 +487,11 @@ function renderRightPanel(state) {
       <span class="section-title">ベースカラー</span>
       <div class="base-color-row">
         <div class="color-picker-wrapper">
-          <input type="color" id="base-color-picker" value="${palette.baseColor}" />
+          <input type="color" id="base-color-picker" value="${palette.baseColor}" aria-label="ベースカラーピッカー" />
           <div class="color-preview" style="background:${palette.baseColor}"></div>
         </div>
         <input type="text" id="base-color-hex" class="hex-input" value="${palette.baseColor}"
-               pattern="^#[0-9a-fA-F]{6}$" />
+               pattern="^#[0-9a-fA-F]{6}$" aria-label="ベースカラー HEX 値" />
       </div>
       <div class="color-info-oklch" id="base-color-info"></div>
     </div>
@@ -420,15 +512,15 @@ function renderRightPanel(state) {
         <div class="setting-item">
           <label>ライト背景</label>
           <div class="bg-color-control">
-            <input type="color" id="light-bg-picker" value="${palette.lightBg}" />
-            <input type="text" id="light-bg-hex" class="hex-input small" value="${palette.lightBg}" />
+            <input type="color" id="light-bg-picker" value="${palette.lightBg}" aria-label="ライト背景色ピッカー" />
+            <input type="text" id="light-bg-hex" class="hex-input small" value="${palette.lightBg}" aria-label="ライト背景色 HEX 値" />
           </div>
         </div>
         <div class="setting-item">
           <label>ダーク背景</label>
           <div class="bg-color-control">
-            <input type="color" id="dark-bg-picker" value="${palette.darkBg}" />
-            <input type="text" id="dark-bg-hex" class="hex-input small" value="${palette.darkBg}" />
+            <input type="color" id="dark-bg-picker" value="${palette.darkBg}" aria-label="ダーク背景色ピッカー" />
+            <input type="text" id="dark-bg-hex" class="hex-input small" value="${palette.darkBg}" aria-label="ダーク背景色 HEX 値" />
           </div>
         </div>
       </div>
@@ -439,8 +531,8 @@ function renderRightPanel(state) {
     <div class="editor-section" style="margin-top:20px">
       <span class="section-title">モード</span>
       <div class="modes-bar">
-        <div class="mode-tabs" id="mode-tabs"></div>
-        <button class="mode-add-btn" id="add-mode-btn" title="モードを追加">+</button>
+        <div class="mode-tabs" id="mode-tabs" role="tablist" aria-label="モード切り替え"></div>
+        <button class="mode-add-btn" id="add-mode-btn" title="モードを追加" aria-label="モードを追加">+</button>
       </div>
     </div>
   `;
@@ -516,14 +608,14 @@ function bindPropertyEvents(palette) {
   colorCountSlider.addEventListener('input', (e) => {
     sliderDragging = true;
     colorCountInput.value = e.target.value;
-    updatePaletteColorCount(id, parseInt(e.target.value));
+    updatePaletteColorCount(id, parseInt(e.target.value, 10));
   });
   colorCountSlider.addEventListener('change', (e) => {
     sliderDragging = false;
-    updatePaletteColorCount(id, parseInt(e.target.value));
+    updatePaletteColorCount(id, parseInt(e.target.value, 10));
   });
   colorCountInput.addEventListener('change', (e) => {
-    const val = parseInt(e.target.value);
+    const val = parseInt(e.target.value, 10);
     colorCountSlider.value = val;
     updatePaletteColorCount(id, val);
   });
@@ -536,14 +628,14 @@ function bindPropertyEvents(palette) {
       curveSlider.addEventListener('input', (e) => {
         sliderDragging = true;
         curveInput.value = e.target.value;
-        updateLightnessCurve(id, parseInt(e.target.value) / 100);
+        updateLightnessCurve(id, parseInt(e.target.value, 10) / 100);
       });
       curveSlider.addEventListener('change', (e) => {
         sliderDragging = false;
-        updateLightnessCurve(id, parseInt(e.target.value) / 100);
+        updateLightnessCurve(id, parseInt(e.target.value, 10) / 100);
       });
       curveInput.addEventListener('change', (e) => {
-        const val = parseInt(e.target.value);
+        const val = parseInt(e.target.value, 10);
         curveSlider.value = val;
         updateLightnessCurve(id, val / 100);
       });
@@ -574,13 +666,20 @@ function renderModeTabs(palette) {
   const tabsContainer = document.getElementById('mode-tabs');
   tabsContainer.innerHTML = '';
 
-  palette.modes.forEach((mode) => {
+  palette.modes.forEach((mode, index) => {
+    const isActive = mode.id === palette.activeModeId;
     const tab = document.createElement('div');
-    tab.className = `mode-tab ${mode.id === palette.activeModeId ? 'active' : ''}`;
+    tab.className = `mode-tab ${isActive ? 'active' : ''}`;
+    tab.dataset.modeId = mode.id;
+
+    // ARIA: tab pattern with roving tabindex
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', String(isActive));
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
 
     tab.innerHTML = `
-      <input class="mode-name-input" value="${escapeHtml(mode.name)}" />
-      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除">✕</button>' : ''}
+      <input class="mode-name-input" value="${escapeHtml(mode.name)}" aria-label="モード名" />
+      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除" aria-label="モードを削除">✕</button>' : ''}
     `;
 
     tab.addEventListener('click', (e) => {
@@ -589,10 +688,41 @@ function renderModeTabs(palette) {
       }
     });
 
+    // Keyboard navigation for tabs (Arrow Left/Right)
+    tab.addEventListener('keydown', (e) => {
+      if (e.target.classList.contains('mode-name-input')) return;
+      const modes = palette.modes;
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          if (index < modes.length - 1) {
+            pendingFocusModeId = modes[index + 1].id;
+            setActiveMode(palette.id, pendingFocusModeId);
+          }
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          if (index > 0) {
+            pendingFocusModeId = modes[index - 1].id;
+            setActiveMode(palette.id, pendingFocusModeId);
+          }
+          break;
+        case 'Delete':
+          e.preventDefault();
+          if (palette.modes.length > 1) {
+            deleteMode(palette.id, mode.id);
+          }
+          break;
+      }
+    });
+
     tab.querySelector('.mode-name-input').addEventListener('change', (e) => {
       updateModeName(palette.id, mode.id, e.target.value);
     });
     tab.querySelector('.mode-name-input').addEventListener('keydown', (e) => {
+      e.stopPropagation();
       if (e.key === 'Enter') e.target.blur();
     });
 
@@ -606,6 +736,13 @@ function renderModeTabs(palette) {
 
     tabsContainer.appendChild(tab);
   });
+
+  // Restore focus after DOM rebuild (keyboard navigation)
+  if (pendingFocusModeId) {
+    const target = tabsContainer.querySelector(`[data-mode-id="${pendingFocusModeId}"]`);
+    if (target) target.focus();
+    pendingFocusModeId = null;
+  }
 }
 
 function renderSwatches(palette, colors, state, stepNames) {
@@ -631,13 +768,13 @@ function renderSwatches(palette, colors, state, stepNames) {
         <div class="swatch-color alpha-swatch" style="color:${textColor}">
           <div class="swatch-alpha-overlay" style="background:${hexToRgba(color.hex, alpha)}">
             <input class="swatch-step-input" value="${escapeHtml(stepName)}"
-                   style="color:${textColor}" />
+                   style="color:${textColor}" aria-label="ステップ名" />
             <span class="swatch-alpha-badge" style="color:${textColor}">${Math.round(alpha * 100)}%</span>
             ${i === palette.baseColorIndex ? `<span class="swatch-base-badge" style="color:${textColor}">ベース</span>` : ''}
           </div>
         </div>
         <div class="swatch-info">
-          <input type="color" class="swatch-picker" value="${color.hex}" />
+          <input type="color" class="swatch-picker" value="${color.hex}" aria-label="ステップ ${stepName} のカラーピッカー" />
           <code class="swatch-hex">${color.hex} · ${Math.round(alpha * 100)}%</code>
         </div>
       `;
@@ -647,11 +784,11 @@ function renderSwatches(palette, colors, state, stepNames) {
       swatch.innerHTML = `
         <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
           <input class="swatch-step-input" value="${escapeHtml(stepName)}"
-                 style="color:${textColor}" />
+                 style="color:${textColor}" aria-label="ステップ名" />
           ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
         </div>
         <div class="swatch-info">
-          <input type="color" class="swatch-picker" value="${color.hex}" />
+          <input type="color" class="swatch-picker" value="${color.hex}" aria-label="ステップ ${stepName} のカラーピッカー" />
           <code class="swatch-hex">${color.hex}</code>
         </div>
       `;

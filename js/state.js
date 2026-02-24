@@ -16,19 +16,25 @@ export function getState() {
 }
 
 export function subscribe(listener) {
-  listeners.push(listener);
+  // E18: Prevent duplicate listener registration
+  if (!listeners.includes(listener)) {
+    listeners.push(listener);
+  }
   return () => {
     listeners = listeners.filter((l) => l !== listener);
   };
 }
 
+let saveTimer = null;
+
 function notify() {
   listeners.forEach((l) => l(state));
-  saveToLocalStorage();
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToLocalStorage, 300);
 }
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
 }
 
 function generateStepNames(count) {
@@ -470,10 +476,18 @@ export function getSelectedPalette() {
 }
 
 export function importPalettes(palettes) {
+  // E14: Re-generate IDs to prevent collisions with existing palettes
+  const existingIds = new Set(state.palettes.map((p) => p.id));
+  const deduped = palettes.map((p) => {
+    const newPaletteId = existingIds.has(p.id) ? generateId() : p.id;
+    const newModes = p.modes.map((m) => ({ ...m, id: generateId() }));
+    const newActiveModeId = newModes.length > 0 ? newModes[0].id : null;
+    return { ...p, id: newPaletteId, modes: newModes, activeModeId: newActiveModeId };
+  });
   state = {
     ...state,
-    palettes: [...state.palettes, ...palettes],
-    selectedPaletteId: palettes.length > 0 ? palettes[0].id : state.selectedPaletteId,
+    palettes: [...state.palettes, ...deduped],
+    selectedPaletteId: deduped.length > 0 ? deduped[0].id : state.selectedPaletteId,
   };
   notify();
 }
@@ -492,8 +506,55 @@ function saveToLocalStorage() {
   try {
     localStorage.setItem('color-palette-generator', JSON.stringify(state));
   } catch (e) {
-    // silently fail
+    console.warn('Failed to save to localStorage:', e.message);
   }
+}
+
+// E2: Validate localStorage data structure before applying
+function validateStoredState(parsed) {
+  if (typeof parsed !== 'object' || parsed === null) return null;
+
+  const validated = { ...parsed };
+
+  // Ensure palettes is an array
+  if (!Array.isArray(validated.palettes)) {
+    validated.palettes = [];
+  }
+
+  // Validate each palette has required fields
+  validated.palettes = validated.palettes.filter((p) => {
+    if (typeof p !== 'object' || p === null) return false;
+    if (typeof p.id !== 'string') return false;
+    if (typeof p.name !== 'string') return false;
+    if (!Array.isArray(p.modes) || p.modes.length === 0) return false;
+    if (typeof p.baseColor !== 'string') return false;
+    return true;
+  });
+
+  // Validate selectedPaletteId references an existing palette
+  if (validated.selectedPaletteId) {
+    const exists = validated.palettes.some((p) => p.id === validated.selectedPaletteId);
+    if (!exists) {
+      validated.selectedPaletteId = validated.palettes.length > 0 ? validated.palettes[0].id : null;
+    }
+  }
+
+  // Validate theme
+  if (!['light', 'dark', 'system'].includes(validated.theme)) {
+    validated.theme = 'system';
+  }
+
+  // Validate collectionName
+  if (typeof validated.collectionName !== 'string') {
+    validated.collectionName = 'カラーパレット';
+  }
+
+  // Validate backgroundPreview
+  if (!['light', 'dark'].includes(validated.backgroundPreview)) {
+    validated.backgroundPreview = 'light';
+  }
+
+  return validated;
 }
 
 export function loadFromLocalStorage() {
@@ -501,12 +562,15 @@ export function loadFromLocalStorage() {
     const saved = localStorage.getItem('color-palette-generator');
     if (saved) {
       const parsed = JSON.parse(saved);
-      state = { ...state, ...parsed };
-      notify();
-      return true;
+      const validated = validateStoredState(parsed);
+      if (validated) {
+        state = { ...state, ...validated };
+        notify();
+        return true;
+      }
     }
   } catch (e) {
-    // silently fail
+    console.warn('Failed to load from localStorage:', e.message);
   }
   return false;
 }
