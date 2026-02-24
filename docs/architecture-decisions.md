@@ -288,3 +288,23 @@ function notify() { listeners.forEach(l => l(state)); saveToLocalStorage(); }
 | E11 | `getUniqueName` のループ上限 — 理論上のリスクのみ。 |
 | E12 | ResizeObserver デバウンス — 実測でパフォーマンス問題なし。 |
 | E16 | チャートの stale closure — 現行のドラッグ動作では実害なし。 |
+
+---
+
+## ADR-014: 第3回エンジニアリング修正の実施（2026-02-24）
+
+**日付**: 2026-02-24
+**ステータス**: 採用（対応済み）
+**コンテキスト**: 3エージェント並列レビューで特定された追加課題。
+
+### 修正済み
+
+| ID | 修正内容 | ファイル |
+|---|---|---|
+| E20 | `theme-select` に `aria-label="テーマ切り替え"` を追加。 | `index.html` |
+| E21 | `panel-center` に `aria-label="カラースウォッチ・チャート・コントラスト"` を追加。 | `index.html` |
+| E22 | インポートエラー時の `err.message` をスナックバーに直接表示していたのを、固定の日本語メッセージに変更。技術詳細は `console.warn` へ。 | `ui.js` |
+| E23 | `colorCount`・`lightnessCurve` の `<input type="number">` の `change` イベントで `parseInt` の結果が `NaN` の場合に早期リターンするガードを追加。 | `ui.js` |
+| E24 | `swatch-step-input` の `aria-label` を全スウォッチで同一の「ステップ名」から「ステップ {stepName} の名前」に変更し、一意に区別可能にした。 | `ui.js` |
+| E25 | `querySelectorAll('.bg-toggle-btn')` のスコープを `document` から `container`（panel-center）に限定。 | `ui.js` |
+| E26 | モード追加ボタンを `<button>+</button>` から `<md-icon-button>` + `<md-icon>add</md-icon>` に変更。M3 コンポーネント一貫性を確保。 | `ui.js`, `css/styles.css` |

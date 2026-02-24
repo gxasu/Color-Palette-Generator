@@ -87,9 +87,13 @@ Alpha パレットで白や黒の透明度スケールを作成。
 ## プロジェクト構成
 
 ```
-├── CLAUDE.md                       # エージェントチーム・プロトコル
+├── CLAUDE.md                       # オーケストレーター指示書
 ├── README.md                       # このファイル
 ├── docs/
+│   ├── agents/
+│   │   ├── design-supervisor.md    # Design Supervisor エージェント定義
+│   │   ├── engineering-supervisor.md # Engineering Supervisor エージェント定義
+│   │   └── writing-supervisor.md   # Writing Supervisor エージェント定義
 │   ├── design-decisions.md         # Design Decision Record (DDR)
 │   ├── architecture-decisions.md   # Architecture Decision Record (ADR)
 │   └── ubiquitous-language.md      # ユビキタス言語辞書
@@ -128,3 +132,4 @@ npm run preview   # ビルド結果のプレビュー
 - [Design Decision Record](docs/design-decisions.md) — UI / UX の設計判断
 - [Architecture Decision Record](docs/architecture-decisions.md) — 技術アーキテクチャの判断
 - [ユビキタス言語辞書](docs/ubiquitous-language.md) — プロジェクト共通用語の定義
+- [Agent Team Protocol](CLAUDE.md) — オーケストレーター指示書・エージェントチーム構成

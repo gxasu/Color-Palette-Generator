@@ -221,3 +221,73 @@ Material Design 3 ガイドラインに基づく全 UI 決定を記録する。
 **コンテキスト**: コントラスト表の `<caption>` をスクリーンリーダーにのみ公開したい。
 **決定**: `.visually-hidden` CSS クラスを追加。`position: absolute; clip: rect(0,0,0,0); width: 1px; height: 1px` パターン。
 **根拠**: WCAG 2.1 テクニック C7。視覚的に非表示だがスクリーンリーダーには読み上げられるテキストの標準パターン。
+
+---
+
+## DDR-021: .info-label コントラスト比の修正
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `.info-label` の色が `--md-sys-color-outline`（#787878）でライト背景（#fafafa）に対するコントラスト比が約 3.6:1 で WCAG 2.1 AA（4.5:1）を満たさなかった。
+**決定**: `--md-sys-color-on-surface-variant`（#474747）に変更。ライト背景に対するコントラスト比 ≈ 7.5:1。
+**根拠**: WCAG 1.4.3 Contrast (Minimum) AA 準拠。M3 の on-surface-variant トークンは補助テキストの正しいセマンティクスカラー。
+
+---
+
+## DDR-022: .swatch-hex フォントサイズの拡大
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `.swatch-hex` の `font-size: 0.625rem`（≈ 8.75px）は可読性が低く、M3 の最小テキストサイズガイドラインを下回る。
+**決定**: `font-size: 0.6875rem`（≈ 9.63px）に拡大。
+**根拠**: M3 の Label Small タイプスケール（11px）には届かないが、スウォッチの限られたスペース内での可読性とレイアウトのバランスを考慮した妥協点。
+
+---
+
+## DDR-023: transition:all の詳細プロパティへの置き換え
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `.palette-card` と `.mode-tab` で `transition: all 200ms` が使用されていた。`all` は意図しないプロパティ（width, height, outline 等）のアニメーションを引き起こし、パフォーマンスに影響する。
+**決定**: `transition: background, border-color, box-shadow` に限定。
+**根拠**: M3 Motion ガイドラインでは意図したプロパティのみにトランジションを適用すべきとされる。
+
+---
+
+## DDR-024: レスポンシブ panel-left の max-height 改善
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `max-height: 220px` はビューポートサイズによっては適切でなかった。
+**決定**: `max-height: 30vh` に変更。ビューポート高さの 30% を使用。
+**根拠**: M3 Layout ガイドライン。固定値よりもビューポート相対値の方がレスポンシブ対応として適切。
+
+---
+
+## DDR-025: モード追加ボタンの md-icon-button 化
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: モード追加ボタンが `<button>+</button>` のプレーン HTML 要素で、他の M3 コンポーネント（`md-icon-button`）と一貫性がなかった。
+**決定**: `<md-icon-button>` + `<md-icon>add</md-icon>` に変更。
+**根拠**: M3 コンポーネントの一貫性。既存の削除ボタン（`.card-delete-btn`）は `md-icon-button` を使用しており、統一する。
+
+---
+
+## DDR-026: select.md-select の :focus-visible 追加
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: テーマ切り替え `<select>` のキーボードフォーカスが CSS の `select:focus-visible { outline: none }` で無効化されていた。
+**決定**: `select.md-select:focus-visible` に `outline: 2px solid var(--md-sys-color-primary)` を追加。
+**根拠**: WCAG 2.4.7 Focus Visible。すべてのインタラクティブ要素にキーボードフォーカスインジケーターが必要。
+
+---
+
+## DDR-027: Snackbar の min-height 48dp 追加
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: Snackbar の高さが内容量に依存しており、M3 の最小タッチターゲットサイズ 48dp を満たさないケースがあった。
+**決定**: `min-height: 48px; display: flex; align-items: center` を追加。
+**根拠**: M3 Snackbar ガイドライン。最小高さを確保し、テキストの垂直中央揃えを保証。
