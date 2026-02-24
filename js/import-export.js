@@ -132,7 +132,7 @@ export function importFromFigmaJson(jsonString) {
 
     const steps = Object.entries(value)
       .filter(([k]) => !k.startsWith('$'))
-      .sort(([a], [b]) => parseInt(a) - parseInt(b));
+      .sort(([a], [b]) => parseInt(a, 10) - parseInt(b, 10));
 
     if (steps.length === 0) return;
 
@@ -232,8 +232,8 @@ function importLegacyFormat(data) {
 
   Object.entries(paletteGroups).forEach(([name, variables]) => {
     variables.sort((a, b) => {
-      const aStep = parseInt(a.name.split('/').pop()) || 0;
-      const bStep = parseInt(b.name.split('/').pop()) || 0;
+      const aStep = parseInt(a.name.split('/').pop(), 10) || 0;
+      const bStep = parseInt(b.name.split('/').pop(), 10) || 0;
       return aStep - bStep;
     });
 
@@ -303,5 +303,6 @@ export function downloadJson(content, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // E17: Delay revocation to ensure browser has started the download
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

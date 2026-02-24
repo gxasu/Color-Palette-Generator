@@ -120,3 +120,104 @@ Material Design 3 ガイドラインに基づく全 UI 決定を記録する。
 **コンテキスト**: 一部のスペーシング値（gap: 6px, 10px、margin-top: 6px、padding: 5px 等）が M3 の 4dp グリッドに非準拠。
 **決定**: 全スペーシング値を 4dp の倍数（4px, 8px, 12px, 16px...）に統一。
 **影響範囲**: `.base-color-row` gap 10→8、`.card-meta` margin 6→4、`.color-info-oklch` gap 6→8 / margin 10→8、`.modes-bar` gap 6→8、`.swatch-info` padding 5→4、レスポンシブ `.color-swatches` gap 6→4 / padding 10→8。
+
+---
+
+## DDR-012: アクセシビリティ ARIA パターンの導入
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: パレットカード、モードタブ、背景プレビュートグルなど主要なインタラクティブ要素に ARIA ロール・属性が未設定であり、スクリーンリーダーおよびキーボードユーザーにとって操作不能だった。
+**決定**:
+- パレット一覧: `role="listbox"` + 各カードに `role="option"` + `aria-selected` + roving tabindex
+- モードタブ: `role="tablist"` + 各タブに `role="tab"` + `aria-selected` + roving tabindex
+- 背景トグル: `role="group"` + `aria-label` + `aria-pressed`
+- コントラスト表: `<caption>` + `scope="col"`
+- Canvas チャート: `role="img"` + `aria-label`
+- カラーピッカー全箇所: `aria-label`
+- `<aside>` 要素: `aria-label` でランドマーク区別
+**根拠**: WCAG 2.1 AA 準拠。M3 の Accessibility ガイドラインに沿ったセマンティクス。
+
+---
+
+## DDR-013: キーボードナビゲーションの実装
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: パレットカード間、モードタブ間のキーボード操作（矢印キー、Enter/Space、Delete）が未実装だった。
+**決定**:
+- パレットカード: Arrow Up/Down で選択移動、Enter/Space で選択確定、Delete でパレット削除
+- モードタブ: Arrow Left/Right でモード切り替え、Delete でモード削除
+- roving tabindex パターンで Tab キーのフォーカスを1箇所に集約
+- フォーカス復元: DOM 再構築後に `pendingFocusPaletteId` / `pendingFocusModeId` で自動復元
+**根拠**: WCAG 2.1 SC 2.1.1（Keyboard）、M3 の Listbox / Tabs のキーボード操作パターンに準拠。
+
+---
+
+## DDR-014: 削除ボタンの :focus-within 表示
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `.card-delete-btn` が `:hover` でのみ表示されるため、キーボードユーザーには見えなかった。
+**決定**: `.palette-card:focus-within .card-delete-btn` ルールを追加し、カード内の任意の要素にフォーカスがある場合も削除ボタンを表示する。
+**根拠**: WCAG 2.1 SC 2.4.7（Focus Visible）。hover-only UI はキーボード/スクリーンリーダーユーザーをブロックする。
+
+---
+
+## DDR-015: インポート/エクスポートアイコンの修正
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: インポートボタンに `download` アイコン、エクスポートボタンに `upload` アイコンが設定されており、意味が逆だった。
+**決定**: インポート → `upload` アイコン、エクスポート → `download` アイコンに修正。
+**根拠**: M3 の Icon semantics。`download` は「保存/ダウンロード」、`upload` は「読み込み/アップロード」を意味する。
+
+---
+
+## DDR-016: Roboto Mono フォントの読み込み追加
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: CSS で `font-family: 'Roboto Mono', monospace` が 9 箇所以上参照されているが、Google Fonts からの読み込みリンクが未設定だった。
+**決定**: `index.html` に `<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />` を追加。
+**根拠**: 一貫したモノスペースフォント表示。HEX コード、OKLCH 値、コントラスト比のテーブルで使用。
+
+---
+
+## DDR-017: prefers-reduced-motion メディアクエリの追加
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: アニメーション/トランジションが多数あるが、`prefers-reduced-motion` の考慮がなかった。
+**決定**: `@media (prefers-reduced-motion: reduce)` でアニメーション/トランジションを無効化。hover のリフト効果もオフに。
+**根拠**: WCAG 2.3.3（Animation from Interactions）、M3 の Motion ガイドライン。前庭障害のあるユーザーへの配慮。
+
+---
+
+## DDR-018: M3 Snackbar によるフィードバック
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: `alert()` によるブロッキングダイアログがインポートエラー時に使用されていた。
+**決定**: CSS ベースの M3 Snackbar コンポーネントを実装。`role="status"` + `aria-live="polite"` でスクリーンリーダーにも通知。エラー時は `error-container` 色、成功時は `inverse-surface` 色。4秒後に自動消去。
+**根拠**: M3 Snackbar ガイドライン。非ブロッキング通知はユーザーの作業を中断しない。
+
+---
+
+## DDR-019: disabled 状態の実装
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: パレットが 0 件の場合でもエクスポートボタンがアクティブだった。
+**決定**: `state.palettes.length === 0` の場合、エクスポートボタンに `disabled` 属性を設定。
+**根拠**: M3 の Button States ガイドライン。操作不能な状態を明示的に示す。
+
+---
+
+## DDR-020: visually-hidden ユーティリティクラス
+
+**日付**: 2026-02-24
+**ステータス**: 採用
+**コンテキスト**: コントラスト表の `<caption>` をスクリーンリーダーにのみ公開したい。
+**決定**: `.visually-hidden` CSS クラスを追加。`position: absolute; clip: rect(0,0,0,0); width: 1px; height: 1px` パターン。
+**根拠**: WCAG 2.1 テクニック C7。視覚的に非表示だがスクリーンリーダーには読み上げられるテキストの標準パターン。

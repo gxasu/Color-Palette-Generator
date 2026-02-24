@@ -17,6 +17,7 @@ Figma Variables (DTCG JSON) へのエクスポートに対応し、デザイン�
 - **WCAG コントラスト比** — 各ステップの背景コントラストをリアルタイム表示（AAA / AA / A / Fail）
 - **PWA** — オフライン対応。スマホのホーム画面に追加してネイティブアプリのように使用可能
 - **Material Design 3** — Google の M3 デザインシステムに準拠した UI
+- **アクセシビリティ** — WCAG 2.1 AA 準拠。ARIA ロール・属性、キーボードナビゲーション、prefers-reduced-motion 対応
 
 ---
 

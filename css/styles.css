@@ -496,7 +496,8 @@ body {
   height: 48px;
 }
 
-.palette-card:hover .card-delete-btn {
+.palette-card:hover .card-delete-btn,
+.palette-card:focus-within .card-delete-btn {
   display: inline-flex;
 }
 
@@ -579,6 +580,19 @@ body {
   text-transform: uppercase;
   margin-bottom: 12px;
   color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ===== Visually Hidden (Screen reader only) ===== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ===== Empty State ===== */
@@ -1300,6 +1314,54 @@ md-divider {
 
   .chart-container {
     height: 240px;
+  }
+}
+
+/* ===== Snackbar (M3) ===== */
+.snackbar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  padding: 12px 24px;
+  border-radius: var(--md-sys-shape-xs);
+  font-size: 0.875rem;
+  color: var(--md-sys-color-inverse-on-surface);
+  background: var(--md-sys-color-inverse-surface);
+  box-shadow: var(--md-sys-elevation-3);
+  z-index: 1000;
+  opacity: 0;
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), opacity 300ms;
+  max-width: calc(100% - 48px);
+}
+
+.snackbar.snackbar-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.snackbar-error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .color-swatch:hover {
+    transform: none;
+  }
+
+  .snackbar {
+    transition: none;
   }
 }
 

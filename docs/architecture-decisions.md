@@ -252,3 +252,39 @@ function notify() { listeners.forEach(l => l(state)); saveToLocalStorage(); }
 ### E19: Vite ビルドが SW ファイルの中身を処理しない（Medium）
 `public/sw.js` は `public/` フォルダ配下にあるため、Vite はビルド時にこのファイルをそのままコピーする（変換・ハッシュ付与なし）。SW 内の `PRECACHE_URLS` は `'./'`, `'./manifest.json'` 等の相対パスだが、Vite ビルド後の JS/CSS エントリポイント（ハッシュ付きファイル名）はプリキャッシュ対象に含まれない。結果として、オフライン時にアプリ本体の JS/CSS が取得できない。E7 と関連するが、具体的には **Vite の `vite-plugin-pwa` の導入、または `sw.js` をビルドプロセスに統合してプリキャッシュ URL リストを自動生成する** ことが必要。
 **修正案**: `vite-plugin-pwa`（Workbox ベース）を導入し、ビルドアセットのプリキャッシュを自動化する。
+
+---
+
+## ADR-013: エンジニアリング修正の実施（2026-02-24）
+
+**日付**: 2026-02-24
+**ステータス**: 採用（対応済み）
+**コンテキスト**: ADR-012 で特定された課題のうち、以下を修正した。
+
+### 修正済み
+
+| ID | 修正内容 | ファイル |
+|---|---|---|
+| E2 | `loadFromLocalStorage` に `validateStoredState()` バリデーション関数を追加。`palettes` の型・構造チェック、`theme`/`backgroundPreview` の値検証、`selectedPaletteId` の参照整合性チェックを実施。 | `state.js` |
+| E4 | ARIA ロール・属性を全インタラクティブ要素に追加（`role="listbox"`, `role="option"`, `role="tablist"`, `role="tab"`, `role="img"`, `role="group"`, `aria-selected`, `aria-pressed`, `aria-label`, `scope="col"`, `<caption>`）。 | `ui.js`, `index.html` |
+| E5 | パレットカード・モードタブにキーボードナビゲーション実装（Arrow Up/Down/Left/Right, Enter, Space, Delete）。roving tabindex パターン。フォーカス復元機構。 | `ui.js` |
+| E8 | `saveToLocalStorage` の `catch` を `console.warn` に変更。 | `state.js` |
+| E10 | `reader.onerror` ハンドラを追加。 | `ui.js` |
+| E13 | 全 `parseInt()` 呼び出しに基数 `10` を追加。 | `import-export.js`, `ui.js` |
+| E14 | `importPalettes()` で既存 ID との衝突を検出し、衝突時は新規 ID を再生成。全モード ID も再生成。 | `state.js` |
+| E15 | inline `onclick` ハンドラを削除し、すべて `addEventListener` に統一。 | `ui.js` |
+| E17 | `URL.revokeObjectURL` を `setTimeout` で 10 秒遅延。 | `import-export.js` |
+| E18 | `subscribe()` に `listeners.includes()` による重複チェックを追加。 | `state.js` |
+
+### 未対応（将来の課題）
+
+| ID | 理由 |
+|---|---|
+| E1 | `getState()` のシャローコピー — 現行の呼び出し側が読み取り専用で使用しており、実害なし。パフォーマンスへの影響を考慮し保留。 |
+| E3 | `renderPaletteCards` の差分更新 — Virtual DOM なしでの差分更新は複雑度が高く、現行のパレット数（数十）では実用上問題なし。 |
+| E6 | パレット名サニタイズ — `$` プレフィックスの衝突は稀であり、優先度低。 |
+| E7/E19 | Service Worker のビルド統合 — `vite-plugin-pwa` の導入は別イシューとして管理。 |
+| E9 | 削除確認ダイアログ — Undo 機能の設計と併せて検討。 |
+| E11 | `getUniqueName` のループ上限 — 理論上のリスクのみ。 |
+| E12 | ResizeObserver デバウンス — 実測でパフォーマンス問題なし。 |
+| E16 | チャートの stale closure — 現行のドラッグ動作では実害なし。 |
