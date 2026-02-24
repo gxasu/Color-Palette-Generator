@@ -173,7 +173,7 @@ function notify() { listeners.forEach(l => l(state)); saveToLocalStorage(); }
 **ステータス**: 提案（要対応）
 **コンテキスト**: ADR-001〜011 で対処済みの項目を除く、コードベース全体のエンジニアリングレビュー。
 
-以下の課題が特定された（詳細は Engineering Review Report E1〜E12 を参照）。
+以下の課題が特定された（E1〜E12: 初回レビュー、E13〜E19: 第2回レビューで追加）。
 
 ### E1: getState() がミュータブルな参照を返す（Medium）
 `state.js` line 14–16。`getState()` は内部 `state` オブジェクトへの直接参照を返しているため、呼び出し側が意図せず直接変更可能。現時点で呼び出し側は読み取り専用で使用しているが、防御的コーディングとしてシャローコピーを返すべき。
@@ -220,3 +220,35 @@ function notify() { listeners.forEach(l => l(state)); saveToLocalStorage(); }
 
 ### E12: ResizeObserver コールバックにデバウンスがない（Low）
 `ui.js` line 462–470。`ResizeObserver` のコールバックでリサイズの度に Canvas を即座に再描画している。ウィンドウリサイズ中に高頻度で発火し得る。`requestAnimationFrame` によるスロットリングを入れるべき。
+
+---
+
+**第2回レビュー追加分（2026-02-24）**
+
+### E13: parseInt() に基数引数がない — ソート時の誤解析リスク（Low）
+`import-export.js` line 135 — `parseInt(a)` および `parseInt(b)` に基数（radix）が指定されていない。ステップ名が `"0100"` のような先頭ゼロ付き文字列の場合、一部のレガシー環境で8進数として解釈される可能性がある。同 line 235–236 にも同様のパターンがある。
+**修正案**: すべての `parseInt()` 呼び出しに第2引数 `10` を追加する。
+
+### E14: importPalettes で ID 衝突チェックがない（Medium）
+`state.js` line 475–482。`importPalettes()` はインポートされたパレットを既存パレット配列にそのまま結合する。インポートされたパレットの `id` が既存パレットの `id` と衝突した場合、同一 ID のパレットが複数存在する不整合が発生し、`selectPalette` や `deletePalette` が予期しない動作を示す。
+**修正案**: インポート時に全パレットおよびモードの ID を再生成する。
+
+### E15: inline onclick ハンドラの混在（Low）
+`ui.js` line 258–259。palette card の HTML テンプレートで `onclick="event.stopPropagation()"` をインライン属性で記述している。一方、同じ要素に対して `addEventListener` も使用している（line 268–274, 276–279）。イベント処理方式が混在しており、保守性が低下する。CSP（Content Security Policy）で `unsafe-inline` を禁止した場合にインラインハンドラが動作しなくなる。
+**修正案**: インライン `onclick` を削除し、すべて `addEventListener` に統一する。
+
+### E16: チャートの stale closure — colors 配列がドラッグ中に古くなる（Medium）
+`chart.js` line 111–205。`makeChartInteractive()` のクロージャが初期呼び出し時の `colors` 配列を捕捉し続ける。ドラッグ中に `onValueChange` が状態を更新すると新しい colors が生成されるが、`hitTest()` と `pointPositions()` は古い `colors` を参照し続ける。色数が変わらない単純なドラッグでは実害がないが、`hitTest` の座標計算がずれる可能性がある。
+**修正案**: `hitTest` 内で最新の色データを `getSelectedPalette()` から取得するか、コールバックで最新の colors を渡す仕組みにする。
+
+### E17: downloadJson で Object URL リーク対策が不完全（Low）
+`import-export.js` line 297–307。`URL.createObjectURL(blob)` の後、`a.click()` は非同期にダウンロードを開始する。直後の `URL.revokeObjectURL(url)` が早すぎてダウンロードが開始される前に URL が無効化される場合がある（一部ブラウザ）。
+**修正案**: `setTimeout(() => URL.revokeObjectURL(url), 10000)` 等で遅延 revoke するか、`a.click()` の後に短い `setTimeout` を挟む。
+
+### E18: subscribe() が同一 listener の重複登録を許可する（Low）
+`state.js` line 18–23。`subscribe()` は `listeners.push(listener)` するのみで、同じ関数が複数回登録されるのを防がない。何らかのコードパスで `subscribe(render)` が複数回呼ばれると、1回の `notify()` で `render()` が複数回実行されてパフォーマンスが劣化する。
+**修正案**: 登録前に `if (listeners.includes(listener)) return` で重複チェックするか、`Set` を使用する。
+
+### E19: Vite ビルドが SW ファイルの中身を処理しない（Medium）
+`public/sw.js` は `public/` フォルダ配下にあるため、Vite はビルド時にこのファイルをそのままコピーする（変換・ハッシュ付与なし）。SW 内の `PRECACHE_URLS` は `'./'`, `'./manifest.json'` 等の相対パスだが、Vite ビルド後の JS/CSS エントリポイント（ハッシュ付きファイル名）はプリキャッシュ対象に含まれない。結果として、オフライン時にアプリ本体の JS/CSS が取得できない。E7 と関連するが、具体的には **Vite の `vite-plugin-pwa` の導入、または `sw.js` をビルドプロセスに統合してプリキャッシュ URL リストを自動生成する** ことが必要。
+**修正案**: `vite-plugin-pwa`（Workbox ベース）を導入し、ビルドアセットのプリキャッシュを自動化する。
