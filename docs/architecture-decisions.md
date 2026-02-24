@@ -164,3 +164,59 @@ function notify() { listeners.forEach(l => l(state)); saveToLocalStorage(); }
 **コンテキスト**: `mousemove` / `touchmove` イベントはディスプレイリフレッシュレートを超える頻度で発火する。各イベントで状態更新 + Canvas 再描画が走り、不必要な負荷が発生。
 **決定**: `requestAnimationFrame` でドラッグ中の `onValueChange` 呼び出しをフレーム単位にスロットリング。
 **根拠**: rAF は次の描画フレームまで処理を延期し、中間の mousemove イベントを自然にスキップ。60fps を超えない更新頻度を保証。
+
+---
+
+## ADR-012: エンジニアリングレビュー（2026-02-24）— 未解決の課題
+
+**日付**: 2026-02-24
+**ステータス**: 提案（要対応）
+**コンテキスト**: ADR-001〜011 で対処済みの項目を除く、コードベース全体のエンジニアリングレビュー。
+
+以下の課題が特定された（詳細は Engineering Review Report E1〜E12 を参照）。
+
+### E1: getState() がミュータブルな参照を返す（Medium）
+`state.js` line 14–16。`getState()` は内部 `state` オブジェクトへの直接参照を返しているため、呼び出し側が意図せず直接変更可能。現時点で呼び出し側は読み取り専用で使用しているが、防御的コーディングとしてシャローコピーを返すべき。
+
+### E2: loadFromLocalStorage の構造バリデーション不足（High）
+`state.js` line 502–515。`JSON.parse` の結果をそのまま `state` にスプレッドしているが、保存データの構造バリデーションがない。localStorage が破損した場合、不正なプロパティがアプリ状態に混入する。特に `palettes` が配列であること、各パレットの必須フィールドの存在確認が必要。
+
+### E3: renderPaletteCards が毎回全 DOM を再構築（Medium）
+`ui.js` line 228–283。`container.innerHTML = ''` で全カードを破棄して再構築している。パレット数が多い場合のパフォーマンス低下と、スクロール位置のリセットが発生する。差分更新またはキーベースの再利用を検討すべき。
+
+### E4: ARIA ロール・属性の欠如（High）
+アプリケーション全体で `role` 属性や `aria-*` 属性が一切使用されていない。具体的な欠如箇所:
+- パレット一覧 (`palette-cards`): `role="listbox"` + 各カードに `role="option"` + `aria-selected`
+- モードタブ (`mode-tabs`): `role="tablist"` + 各タブに `role="tab"` + `aria-selected`
+- 背景プレビュー切り替え: `role="radiogroup"` + `aria-pressed`/`aria-checked`
+- コントラスト表: `<caption>` 要素の追加
+- チャート Canvas: `role="img"` + `aria-label` による代替テキスト
+- 削除確認: `aria-live="polite"` でのフィードバック
+
+### E5: キーボードナビゲーション不足（High）
+- パレットカード間の矢印キーナビゲーションが未実装
+- モードタブ間の左右矢印キーナビゲーションが未実装
+- Delete キーでのパレット/モード削除が未実装
+- Canvas チャートのキーボード操作（Tab でポイント選択、上下矢印で値変更）が未実装
+- `role="tablist"` のセマンティクスに必要な Tab/Arrow キー制御がない
+
+### E6: palette.name をエクスポート時にサニタイズしていない（Medium）
+`import-export.js` line 105 — `output[palette.name] = paletteObj` でユーザー入力のパレット名を JSON キーとして直接使用。`$` で始まる名前（例: `$extensions`）が予約キーと衝突する。また `ui.js` line 89 でファイル名に使用する際も、ファイルシステム上の問題文字（`/`, `\`, `:` 等）がエスケープされていない。
+
+### E7: Service Worker キャッシュバージョニングがビルドハッシュと連動していない（Medium）
+`sw.js` line 1 — `CACHE_NAME = 'color-scale-generator-v1'` は手動更新が必要。Vite ビルドはファイル名にハッシュを付与するが、SW の PRECACHE_URLS は静的パスのまま。ビルド成果物のキャッシュ破棄が自動化されておらず、デプロイ後に古い JS/CSS がキャッシュから返される可能性がある。
+
+### E8: saveToLocalStorage の無音の失敗（Low）
+`state.js` line 494–499。`catch (e) {}` で例外を完全に握りつぶしている。`QuotaExceededError`（ストレージ容量超過）時にユーザーへのフィードバックがなく、データ消失に気付けない。最低限 `console.warn` でログを出すか、ユーザーに通知すべき。
+
+### E9: 削除操作に確認ダイアログがない（Low）
+`ui.js` line 276–279（パレット削除）および line 600–604（モード削除）で、ユーザー確認なしに即座に削除が実行される。Undo 機能もないため、誤操作によるデータ消失リスクがある。
+
+### E10: import-file の FileReader エラーハンドリング不足（Low）
+`ui.js` line 100–113。`reader.onerror` が設定されていないため、ファイル読み込み自体の失敗（権限エラー、中断等）がハンドリングされない。`reader.onload` 内の `try-catch` は JSON パースエラーのみをカバーしている。
+
+### E11: getUniqueName の無限ループリスク（Low）
+`state.js` line 50–55。`while` ループで重複名を回避しているが、理論上は上限がない。パレット数が現実的に数千を超えることはないが、防御的に最大試行回数を設けるべき。
+
+### E12: ResizeObserver コールバックにデバウンスがない（Low）
+`ui.js` line 462–470。`ResizeObserver` のコールバックでリサイズの度に Canvas を即座に再描画している。ウィンドウリサイズ中に高頻度で発火し得る。`requestAnimationFrame` によるスロットリングを入れるべき。
