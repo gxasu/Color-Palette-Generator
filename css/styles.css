@@ -422,7 +422,9 @@ body {
   border-radius: var(--md-sys-shape-md);
   padding: 12px;
   cursor: pointer;
-  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+  transition: background 200ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 200ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
   position: relative;
 }
 
@@ -690,7 +692,7 @@ body {
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .color-info-oklch code {
@@ -867,35 +869,10 @@ body {
 }
 
 .mode-add-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed var(--md-sys-color-outline-variant);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 1.25rem;
-  cursor: pointer;
-  transition: all 200ms;
-  position: relative;
-}
-
-/* 48dp touch target */
-.mode-add-btn::after {
-  content: '';
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
-}
-
-.mode-add-btn:hover {
-  border-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary-container);
+  --md-icon-button-icon-size: 20px;
+  --md-icon-button-state-layer-height: 40px;
+  --md-icon-button-state-layer-width: 40px;
+  --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant);
 }
 
 /* ===== Preview Toggle ===== */
@@ -1042,7 +1019,7 @@ body {
 
 .swatch-hex {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--md-sys-color-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1236,7 +1213,7 @@ md-divider {
     min-width: 0;
     border-right: none;
     border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    max-height: 220px;
+    max-height: 30vh;
   }
 
   .panel-center {
@@ -1324,6 +1301,9 @@ md-divider {
   left: 50%;
   transform: translateX(-50%) translateY(100%);
   padding: 12px 24px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
   border-radius: var(--md-sys-shape-xs);
   font-size: 0.875rem;
   color: var(--md-sys-color-inverse-on-surface);
@@ -1398,9 +1378,13 @@ md-divider {
 /* Inputs with custom border-based focus already handle their own styles */
 .md-input:focus-visible,
 .md-input-compact:focus-visible,
-.hex-input:focus-visible,
-select:focus-visible {
+.hex-input:focus-visible {
   outline: none;
+}
+
+select.md-select:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }
 
 /* Custom inline-edit inputs need visible keyboard focus */
@@ -1431,7 +1415,7 @@ select:focus-visible {
   outline-offset: -2px;
 }
 
-.mode-add-btn:focus-visible {
+md-icon-button.mode-add-btn:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
 }

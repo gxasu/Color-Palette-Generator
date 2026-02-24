@@ -112,7 +112,8 @@ function setupGlobalEvents() {
         }
         showSnackbar(`${result.palettes.length}件のパレットをインポートしました`, 'success');
       } catch (err) {
-        showSnackbar('インポートに失敗しました: ' + err.message, 'error');
+        console.warn('Import error:', err);
+        showSnackbar('インポートに失敗しました。JSONファイルの形式を確認してください。', 'error');
       }
     };
     reader.onerror = () => {
@@ -436,7 +437,7 @@ function renderCenterPanel(state) {
   `;
 
   // Bind center-panel events
-  document.querySelectorAll('.bg-toggle-btn').forEach((btn) => {
+  container.querySelectorAll('.bg-toggle-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       setBackgroundPreview(btn.dataset.bg);
     });
@@ -498,7 +499,7 @@ function renderRightPanel(state) {
 
     <md-divider></md-divider>
 
-    <div class="editor-section" style="margin-top:20px">
+    <div class="editor-section" style="margin-top:24px">
       <span class="section-title">パレット設定</span>
       <div class="settings-grid">
         <div class="setting-item">
@@ -528,11 +529,13 @@ function renderRightPanel(state) {
 
     <md-divider></md-divider>
 
-    <div class="editor-section" style="margin-top:20px">
+    <div class="editor-section" style="margin-top:24px">
       <span class="section-title">モード</span>
       <div class="modes-bar">
         <div class="mode-tabs" id="mode-tabs" role="tablist" aria-label="モード切り替え"></div>
-        <button class="mode-add-btn" id="add-mode-btn" title="モードを追加" aria-label="モードを追加">+</button>
+        <md-icon-button class="mode-add-btn" id="add-mode-btn" title="モードを追加" aria-label="モードを追加">
+          <md-icon>add</md-icon>
+        </md-icon-button>
       </div>
     </div>
   `;
@@ -616,6 +619,7 @@ function bindPropertyEvents(palette) {
   });
   colorCountInput.addEventListener('change', (e) => {
     const val = parseInt(e.target.value, 10);
+    if (Number.isNaN(val)) return;
     colorCountSlider.value = val;
     updatePaletteColorCount(id, val);
   });
@@ -636,6 +640,7 @@ function bindPropertyEvents(palette) {
       });
       curveInput.addEventListener('change', (e) => {
         const val = parseInt(e.target.value, 10);
+        if (Number.isNaN(val)) return;
         curveSlider.value = val;
         updateLightnessCurve(id, val / 100);
       });
@@ -768,7 +773,7 @@ function renderSwatches(palette, colors, state, stepNames) {
         <div class="swatch-color alpha-swatch" style="color:${textColor}">
           <div class="swatch-alpha-overlay" style="background:${hexToRgba(color.hex, alpha)}">
             <input class="swatch-step-input" value="${escapeHtml(stepName)}"
-                   style="color:${textColor}" aria-label="ステップ名" />
+                   style="color:${textColor}" aria-label="ステップ ${escapeHtml(stepName)} の名前" />
             <span class="swatch-alpha-badge" style="color:${textColor}">${Math.round(alpha * 100)}%</span>
             ${i === palette.baseColorIndex ? `<span class="swatch-base-badge" style="color:${textColor}">ベース</span>` : ''}
           </div>
@@ -784,7 +789,7 @@ function renderSwatches(palette, colors, state, stepNames) {
       swatch.innerHTML = `
         <div class="swatch-color" style="background:${color.hex}; color:${textColor}">
           <input class="swatch-step-input" value="${escapeHtml(stepName)}"
-                 style="color:${textColor}" aria-label="ステップ名" />
+                 style="color:${textColor}" aria-label="ステップ ${escapeHtml(stepName)} の名前" />
           ${i === palette.baseColorIndex ? '<span class="swatch-base-badge">ベース</span>' : ''}
         </div>
         <div class="swatch-info">
