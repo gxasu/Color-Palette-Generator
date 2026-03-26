@@ -101,6 +101,18 @@ Task({
 
 ---
 
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite 開発サーバー起動（HMR 対応） |
+| `npm run build` | プロダクションビルド（`dist/` に出力） |
+| `npm run preview` | ビルド成果物のローカルプレビュー |
+
+デプロイは `main` ブランチへの push で GitHub Actions が自動実行（`.github/workflows/deploy.yml`）。
+
+---
+
 ## プロジェクト構成
 
 ```
@@ -112,22 +124,40 @@ Color-Palette-Generator/
 │   │   ├── design-supervisor.md       # Design Supervisor エージェント定義
 │   │   ├── engineering-supervisor.md  # Engineering Supervisor エージェント定義
 │   │   └── writing-supervisor.md      # Writing Supervisor エージェント定義
-│   ├── design-decisions.md            # Design Decision Record (DDR)
-│   ├── architecture-decisions.md      # Architecture Decision Record (ADR)
+│   ├── adr/                           # Architecture Decision Records（個別ファイル）
+│   ├── ddr/                           # Design Decision Records（個別ファイル）
+│   ├── architecture-decisions.md      # ADR 一覧（レガシー）
+│   ├── design-decisions.md            # DDR 一覧（レガシー）
 │   └── ubiquitous-language.md         # ユビキタス言語辞書
-├── index.html
-├── css/styles.css
+├── index.html                         # エントリーポイント（Vite が処理）
+├── css/styles.css                     # MD3 デザイントークン定義 + 全スタイル
 ├── js/
-│   ├── app.js                         # エントリーポイント
-│   ├── state.js                       # 状態管理（Observable pattern）
-│   ├── ui.js                          # UI レンダリング・イベント
-│   ├── color-utils.js                 # OKLCH 色空間変換
-│   ├── chart.js                       # 明度/透明度チャート
-│   └── import-export.js               # Figma JSON 入出力
+│   ├── app.js                         # 初期化・Material Web コンポーネントのインポート
+│   ├── state.js                       # 状態管理（pub-sub + イミュータブル更新）
+│   ├── ui.js                          # DOM 操作・3 パネルレンダリング・イベントバインド
+│   ├── color-utils.js                 # OKLCH 色空間変換・ガマットマッピング・コントラスト比計算
+│   ├── chart.js                       # Canvas ベースの明度チャート描画
+│   └── import-export.js               # Figma Variables JSON インポート/エクスポート
 ├── public/                            # 静的アセット（PWA icons, SW, manifest）
-├── vite.config.js
+├── .github/workflows/deploy.yml       # GitHub Pages デプロイ
+├── vite.config.js                     # 最小構成（root + outDir のみ）
 └── package.json
 ```
+
+## Key Files
+
+- `js/state.js` - 全アプリ状態の Single Source of Truth。`subscribe()` で UI が購読、`notify()` で localStorage に自動保存
+- `js/color-utils.js` - sRGB ↔ Linear RGB ↔ XYZ (D65) ↔ Oklab ↔ OKLCH の変換チェーン。外部依存なし
+- `css/styles.css` - `:root` / `[data-theme="light"]` / `[data-theme="dark"]` で MD3 トークンを定義
+
+## Data Flow
+
+```
+ユーザー操作 → state.js の mutation 関数 → notify() → subscribe 済みの render() → DOM 更新
+                                           └→ localStorage に自動保存（デバウンス付き）
+```
+
+---
 
 ## コーディング規約
 
@@ -149,3 +179,13 @@ Color-Palette-Generator/
 | Color | OKLCH color space（自前の数学的変換実装） |
 | Persistence | localStorage |
 | Deploy | GitHub Pages via GitHub Actions |
+
+## Gotchas
+
+- **ガマットマッピング**: OKLCH で生成した色は sRGB 範囲外になりうる。`gamutMapOklch()` が二分探索で Chroma を削減してガマット内に収める（精度 0.0001、最大 ~14 イテレーション）
+- **全体再レンダリング**: `notify()` のたびに 3 パネルすべてを `innerHTML` で再構築する。パレット数が数百件になるとパフォーマンス劣化の可能性あり
+- **localStorage キー**: `color-palette-generator` の単一キーに全状態を JSON 保存。スキーマバージョニングなし
+- **md-slider の value**: Material Web の `<md-slider>` は `value` 属性を文字列で返す場合がある。`parseInt()` で変換が必要
+- **ダークモード自動生成**: パレット作成時にライトモードの `lightnessCurve` を反転（`-Math.abs(curve)`）してダークモードを自動生成する
+- **Figma JSON インポート**: 変数名の `/` 区切りの最初のセグメントをパレット名として推定。命名規則が異なる Figma ファイルではパース失敗の可能性あり
+- **subscribe 重複防止**: `subscribe()` は同一リスナーの重複登録を防ぐガードあり（E18）
