@@ -135,8 +135,10 @@ function showSnackbar(message, type = 'info') {
 
   const snackbar = document.createElement('div');
   snackbar.className = `snackbar snackbar-${type}`;
-  snackbar.setAttribute('role', 'status');
-  snackbar.setAttribute('aria-live', 'polite');
+  // Errors use assertive to immediately announce; info/success use polite
+  const isUrgent = type === 'error';
+  snackbar.setAttribute('role', isUrgent ? 'alert' : 'status');
+  snackbar.setAttribute('aria-live', isUrgent ? 'assertive' : 'polite');
   snackbar.textContent = message;
   document.body.appendChild(snackbar);
 
@@ -372,12 +374,25 @@ function renderPaletteCards(state) {
   }
 }
 
+// Clean up chart-related resources (ResizeObserver, window event listeners)
+function cleanupChart() {
+  if (chartCleanup) {
+    chartCleanup();
+    chartCleanup = null;
+  }
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+}
+
 // ===== Center Panel: Swatches, Chart, Contrast =====
 function renderCenterPanel(state) {
   const container = document.getElementById('panel-center');
   const palette = getSelectedPalette();
 
   if (!palette) {
+    cleanupChart();
     container.innerHTML = `
       <div class="empty-state">
         <md-icon class="empty-icon">palette</md-icon>
@@ -395,7 +410,7 @@ function renderCenterPanel(state) {
   container.innerHTML = `
     <div class="editor-section">
       <div class="preview-toggle-row">
-        <span class="section-title" style="margin-bottom:0">カラースウォッチ</span>
+        <span class="section-title">カラースウォッチ</span>
         <div class="preview-bg-toggle" role="group" aria-label="背景プレビュー切り替え">
           <button class="bg-toggle-btn ${state.backgroundPreview === 'light' ? 'active' : ''}" data-bg="light"
                   aria-pressed="${state.backgroundPreview === 'light' ? 'true' : 'false'}">ライト</button>
@@ -547,8 +562,7 @@ function renderRightPanel(state) {
 
 function setupChartInteractive(canvas, palette, colors, stepNames) {
   // Cleanup previous listeners
-  if (chartCleanup) chartCleanup();
-  if (resizeObserver) resizeObserver.disconnect();
+  cleanupChart();
 
   const isAlpha = palette.paletteType === 'alpha';
   const valueKey = isAlpha ? 'alpha' : 'L';
@@ -884,8 +898,8 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+const _escapeEl = document.createElement('div');
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  _escapeEl.textContent = str;
+  return _escapeEl.innerHTML;
 }
