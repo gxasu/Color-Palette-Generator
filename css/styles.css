@@ -1590,7 +1590,6 @@ md-icon-button.mode-add-btn:focus-visible {
 
 /* ===== DESIGN.md (Figma Inspired) Global Overrides ===== */
 :root,
-<<<<<<< ours
 [data-theme="light"] {
   --md-sys-color-primary: #000000;
   --md-sys-color-on-primary: #ffffff;
@@ -1599,37 +1598,17 @@ md-icon-button.mode-add-btn:focus-visible {
   --md-sys-color-secondary: #000000;
   --md-sys-color-on-secondary: #ffffff;
   --md-sys-color-secondary-container: #f3f3f3;
-=======
-[data-theme="light"],
-[data-theme="dark"] {
-  --md-sys-color-primary: #000000;
-  --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #ffffff;
-  --md-sys-color-on-primary-container: #000000;
-  --md-sys-color-secondary: #000000;
-  --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-secondary-container: #ffffff;
->>>>>>> theirs
   --md-sys-color-on-secondary-container: #000000;
   --md-sys-color-tertiary: #000000;
   --md-sys-color-on-tertiary: #ffffff;
   --md-sys-color-surface: #ffffff;
   --md-sys-color-on-surface: #000000;
-<<<<<<< ours
   --md-sys-color-on-surface-variant: rgba(0, 0, 0, 0.72);
   --md-sys-color-surface-container-lowest: #ffffff;
   --md-sys-color-surface-container-low: #ffffff;
   --md-sys-color-surface-container: #fafafa;
   --md-sys-color-surface-container-high: #f5f5f5;
   --md-sys-color-surface-container-highest: #eeeeee;
-=======
-  --md-sys-color-on-surface-variant: #000000;
-  --md-sys-color-surface-container-lowest: #ffffff;
-  --md-sys-color-surface-container-low: #ffffff;
-  --md-sys-color-surface-container: #ffffff;
-  --md-sys-color-surface-container-high: #ffffff;
-  --md-sys-color-surface-container-highest: #ffffff;
->>>>>>> theirs
   --md-sys-color-outline: #000000;
   --md-sys-color-outline-variant: rgba(0, 0, 0, 0.24);
   --md-sys-color-inverse-surface: #000000;
@@ -1637,36 +1616,24 @@ md-icon-button.mode-add-btn:focus-visible {
   --md-sys-elevation-1: 0 1px 2px rgba(0,0,0,0.08);
   --md-sys-elevation-2: 0 4px 12px rgba(0,0,0,0.12);
   --md-sys-elevation-3: 0 8px 24px rgba(0,0,0,0.16);
-<<<<<<< ours
   --figma-button-container-color: #000000;
   --figma-button-label-color: #ffffff;
   --figma-button-hover-layer-color: rgba(255, 255, 255, 0.12);
   --figma-button-pressed-layer-color: rgba(255, 255, 255, 0.2);
   --figma-focus-color: #000000;
   --figma-theme-color: #ffffff;
-=======
-
->>>>>>> theirs
   --md-sys-shape-xs: 2px;
   --md-sys-shape-sm: 6px;
   --md-sys-shape-md: 8px;
   --md-sys-shape-lg: 8px;
   --md-sys-shape-xl: 50px;
-<<<<<<< ours
   --md-filled-tonal-button-container-shape: 50px;
   --md-filled-tonal-button-container-height: 42px;
-=======
-
-  --md-filled-tonal-button-container-shape: 50px;
-  --md-filled-tonal-button-container-height: 42px;
-
->>>>>>> theirs
   --md-icon-button-state-layer-height: 40px;
   --md-icon-button-state-layer-width: 40px;
   --md-icon-button-container-shape: 50%;
 }
 
-<<<<<<< ours
 [data-theme="dark"] {
   --md-sys-color-primary: #ffffff;
   --md-sys-color-on-primary: #000000;
@@ -1708,10 +1675,6 @@ html {
 
 html[data-theme="dark"] {
   color-scheme: dark;
-=======
-html {
-  font-size: 16px;
->>>>>>> theirs
 }
 
 body,
@@ -1730,7 +1693,6 @@ textarea {
 .body-small,
 .card-name-input,
 .md-input,
-<<<<<<< ours
 .md-select {
   font-weight: 340;
   letter-spacing: -0.14px;
@@ -1742,13 +1704,6 @@ textarea {
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface);
-=======
-.md-select,
-.app-title {
-  font-weight: 340;
-  letter-spacing: -0.14px;
-  color: #000000;
->>>>>>> theirs
 }
 
 .label-small,
@@ -1757,11 +1712,7 @@ textarea {
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.54px;
-<<<<<<< ours
   color: var(--md-sys-color-on-surface-variant);
-=======
-  color: #000000;
->>>>>>> theirs
 }
 
 .app-header,
@@ -1774,11 +1725,7 @@ textarea {
 .contrast-table,
 .mode-tab,
 .palette-card.selected {
-<<<<<<< ours
   background: var(--md-sys-color-surface);
-=======
-  background: #ffffff;
->>>>>>> theirs
 }
 
 .app-header,
@@ -1788,11 +1735,7 @@ textarea {
 .palette-card,
 .control-section,
 .mode-tab {
-<<<<<<< ours
   border-color: var(--md-sys-color-outline);
-=======
-  border-color: #000000;
->>>>>>> theirs
 }
 
 md-filled-tonal-button,
@@ -1812,18 +1755,11 @@ md-icon-button,
 }
 
 md-filled-tonal-button {
-<<<<<<< ours
   color: var(--figma-button-label-color);
   --md-filled-tonal-button-container-color: var(--figma-button-container-color);
   --md-filled-tonal-button-label-text-color: var(--figma-button-label-color);
   --md-filled-tonal-button-hover-state-layer-color: var(--figma-button-hover-layer-color);
   --md-filled-tonal-button-pressed-state-layer-color: var(--figma-button-pressed-layer-color);
-=======
-  --md-filled-tonal-button-container-color: #000000;
-  --md-filled-tonal-button-label-text-color: #ffffff;
-  --md-filled-tonal-button-hover-state-layer-color: rgba(255,255,255,0.12);
-  --md-filled-tonal-button-pressed-state-layer-color: rgba(255,255,255,0.2);
->>>>>>> theirs
 }
 
 .md-input,
@@ -1832,7 +1768,6 @@ md-filled-tonal-button {
 .collection-name-wrapper .md-input,
 .number-input,
 .hex-input {
-<<<<<<< ours
   border: 1px solid var(--md-sys-color-outline);
   background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface);
@@ -1841,24 +1776,10 @@ md-filled-tonal-button {
 
 :focus-visible {
   outline: 2px dashed var(--figma-focus-color) !important;
-=======
-  border: 1px solid #000000;
-  background: #ffffff;
-  color: #000000;
-}
-
-:focus-visible {
-  outline: 2px dashed #000000 !important;
->>>>>>> theirs
   outline-offset: 2px;
 }
 
 .bg-toggle-btn.active {
-<<<<<<< ours
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
-=======
-  background: #000000;
-  color: #ffffff;
->>>>>>> theirs
 }
