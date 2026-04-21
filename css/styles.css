@@ -291,18 +291,51 @@ body {
 }
 
 .app-title {
+  font-family: 'Roboto Condensed', figmaSans, "figmaSans Fallback", "SF Pro Display", system-ui, helvetica, sans-serif;
   font-size: 1.125rem;
-  font-weight: 500;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
   color: var(--md-sys-color-on-surface);
+}
+
+.app-icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  pointer-events: none;
 }
 
 .logo-icon {
   color: var(--md-sys-color-primary);
   font-size: 24px;
+}
+
+.button-icon {
+  font-size: 18px;
+}
+
+.button-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  line-height: 0;
+}
+
+md-filled-tonal-button .app-icon,
+md-icon-button .app-icon {
+  display: block;
+}
+
+md-icon-button .button-icon,
+.card-delete-btn .button-icon,
+.mode-add-btn .button-icon {
+  font-size: 18px;
 }
 
 .header-right {
@@ -371,7 +404,47 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+}
+
+.theme-menu {
+  position: relative;
+}
+
+.header-icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 50%;
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 150ms cubic-bezier(0.2, 0, 0, 1),
+              background 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.header-icon-btn:hover,
+.header-icon-btn[aria-expanded="true"] {
+  background: var(--md-sys-color-surface-container);
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.header-icon-btn:hover {
+  transform: translateY(-1px);
+}
+
+.header-dropdown-menu {
+  right: 0;
+  min-width: 156px;
+}
+
+.theme-option.is-active {
+  background: var(--md-sys-color-surface-container);
+  font-weight: 500;
 }
 
 /* ===== 3-Column Layout ===== */
@@ -396,14 +469,96 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 12px 16px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
+.panel-header .title-small {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .panel-header-actions {
   display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.panel-add-menu {
+  position: relative;
+}
+
+.panel-add-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 50%;
+  background: var(--figma-button-container-color);
+  color: var(--figma-button-label-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.panel-add-btn:hover {
+  box-shadow: var(--md-sys-elevation-1);
+  transform: translateY(-1px);
+}
+
+.panel-add-btn .button-icon {
+  font-size: 18px;
+}
+
+.panel-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 188px;
+  padding: 6px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: var(--md-sys-elevation-2);
+  display: flex;
+  flex-direction: column;
   gap: 4px;
+  z-index: 20;
+}
+
+.panel-dropdown-menu[hidden] {
+  display: none !important;
+}
+
+.panel-dropdown-item {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-dropdown-item:hover {
+  background: var(--md-sys-color-surface-container);
+}
+
+.panel-dropdown-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
 }
 
 .palette-list {
@@ -761,14 +916,13 @@ body {
   gap: 8px;
 }
 
-.bg-color-control input[type="color"] {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-sm);
-  cursor: pointer;
-  padding: 2px;
-  background: transparent;
+.bg-picker-wrapper {
+  width: 40px;
+  height: 40px;
+}
+
+.bg-color-control .color-preview {
+  border-width: 2px;
 }
 
 /* ===== Mode Tabs ===== */
@@ -852,6 +1006,10 @@ body {
   border-radius: 50%;
   transition: all 150ms;
   position: relative;
+}
+
+.mode-delete-btn .button-icon {
+  font-size: 14px;
 }
 
 /* 48dp touch target */
@@ -1428,4 +1586,279 @@ md-icon-button.mode-add-btn:focus-visible {
 .mode-delete-btn:focus-visible {
   outline: 2px solid var(--md-sys-color-primary);
   outline-offset: 2px;
+}
+
+/* ===== DESIGN.md (Figma Inspired) Global Overrides ===== */
+:root,
+<<<<<<< ours
+[data-theme="light"] {
+  --md-sys-color-primary: #000000;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #f3f3f3;
+  --md-sys-color-on-primary-container: #000000;
+  --md-sys-color-secondary: #000000;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #f3f3f3;
+=======
+[data-theme="light"],
+[data-theme="dark"] {
+  --md-sys-color-primary: #000000;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #ffffff;
+  --md-sys-color-on-primary-container: #000000;
+  --md-sys-color-secondary: #000000;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #ffffff;
+>>>>>>> theirs
+  --md-sys-color-on-secondary-container: #000000;
+  --md-sys-color-tertiary: #000000;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-surface: #ffffff;
+  --md-sys-color-on-surface: #000000;
+<<<<<<< ours
+  --md-sys-color-on-surface-variant: rgba(0, 0, 0, 0.72);
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #ffffff;
+  --md-sys-color-surface-container: #fafafa;
+  --md-sys-color-surface-container-high: #f5f5f5;
+  --md-sys-color-surface-container-highest: #eeeeee;
+=======
+  --md-sys-color-on-surface-variant: #000000;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #ffffff;
+  --md-sys-color-surface-container: #ffffff;
+  --md-sys-color-surface-container-high: #ffffff;
+  --md-sys-color-surface-container-highest: #ffffff;
+>>>>>>> theirs
+  --md-sys-color-outline: #000000;
+  --md-sys-color-outline-variant: rgba(0, 0, 0, 0.24);
+  --md-sys-color-inverse-surface: #000000;
+  --md-sys-color-inverse-on-surface: #ffffff;
+  --md-sys-elevation-1: 0 1px 2px rgba(0,0,0,0.08);
+  --md-sys-elevation-2: 0 4px 12px rgba(0,0,0,0.12);
+  --md-sys-elevation-3: 0 8px 24px rgba(0,0,0,0.16);
+<<<<<<< ours
+  --figma-button-container-color: #000000;
+  --figma-button-label-color: #ffffff;
+  --figma-button-hover-layer-color: rgba(255, 255, 255, 0.12);
+  --figma-button-pressed-layer-color: rgba(255, 255, 255, 0.2);
+  --figma-focus-color: #000000;
+  --figma-theme-color: #ffffff;
+=======
+
+>>>>>>> theirs
+  --md-sys-shape-xs: 2px;
+  --md-sys-shape-sm: 6px;
+  --md-sys-shape-md: 8px;
+  --md-sys-shape-lg: 8px;
+  --md-sys-shape-xl: 50px;
+<<<<<<< ours
+  --md-filled-tonal-button-container-shape: 50px;
+  --md-filled-tonal-button-container-height: 42px;
+=======
+
+  --md-filled-tonal-button-container-shape: 50px;
+  --md-filled-tonal-button-container-height: 42px;
+
+>>>>>>> theirs
+  --md-icon-button-state-layer-height: 40px;
+  --md-icon-button-state-layer-width: 40px;
+  --md-icon-button-container-shape: 50%;
+}
+
+<<<<<<< ours
+[data-theme="dark"] {
+  --md-sys-color-primary: #ffffff;
+  --md-sys-color-on-primary: #000000;
+  --md-sys-color-primary-container: #111111;
+  --md-sys-color-on-primary-container: #ffffff;
+  --md-sys-color-secondary: #ffffff;
+  --md-sys-color-on-secondary: #000000;
+  --md-sys-color-secondary-container: #111111;
+  --md-sys-color-on-secondary-container: #ffffff;
+  --md-sys-color-tertiary: #ffffff;
+  --md-sys-color-on-tertiary: #000000;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-on-surface: #ffffff;
+  --md-sys-color-on-surface-variant: rgba(255, 255, 255, 0.76);
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #050505;
+  --md-sys-color-surface-container: #0a0a0a;
+  --md-sys-color-surface-container-high: #101010;
+  --md-sys-color-surface-container-highest: #171717;
+  --md-sys-color-outline: rgba(255, 255, 255, 0.88);
+  --md-sys-color-outline-variant: rgba(255, 255, 255, 0.24);
+  --md-sys-color-inverse-surface: #ffffff;
+  --md-sys-color-inverse-on-surface: #000000;
+  --md-sys-elevation-1: 0 1px 2px rgba(255,255,255,0.08);
+  --md-sys-elevation-2: 0 4px 12px rgba(255,255,255,0.1);
+  --md-sys-elevation-3: 0 8px 24px rgba(255,255,255,0.12);
+  --figma-button-container-color: #ffffff;
+  --figma-button-label-color: #000000;
+  --figma-button-hover-layer-color: rgba(0, 0, 0, 0.08);
+  --figma-button-pressed-layer-color: rgba(0, 0, 0, 0.16);
+  --figma-focus-color: #ffffff;
+  --figma-theme-color: #000000;
+}
+
+html {
+  font-size: 16px;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+=======
+html {
+  font-size: 16px;
+>>>>>>> theirs
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: figmaSans, "figmaSans Fallback", "SF Pro Display", system-ui, helvetica, sans-serif;
+  font-kerning: normal;
+  font-feature-settings: "kern";
+  letter-spacing: -0.14px;
+}
+
+.title-small,
+.title-medium,
+.body-small,
+.card-name-input,
+.md-input,
+<<<<<<< ours
+.md-select {
+  font-weight: 340;
+  letter-spacing: -0.14px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.app-title {
+  font-family: 'Roboto Condensed', figmaSans, "figmaSans Fallback", "SF Pro Display", system-ui, helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface);
+=======
+.md-select,
+.app-title {
+  font-weight: 340;
+  letter-spacing: -0.14px;
+  color: #000000;
+>>>>>>> theirs
+}
+
+.label-small,
+.label-medium {
+  font-family: figmaMono, "figmaMono Fallback", "SF Mono", menlo, monospace;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.54px;
+<<<<<<< ours
+  color: var(--md-sys-color-on-surface-variant);
+=======
+  color: #000000;
+>>>>>>> theirs
+}
+
+.app-header,
+.panel-left,
+.panel-right,
+.panel-center,
+.palette-card,
+.control-section,
+.chart-container,
+.contrast-table,
+.mode-tab,
+.palette-card.selected {
+<<<<<<< ours
+  background: var(--md-sys-color-surface);
+=======
+  background: #ffffff;
+>>>>>>> theirs
+}
+
+.app-header,
+.panel-left,
+.panel-right,
+.panel-header,
+.palette-card,
+.control-section,
+.mode-tab {
+<<<<<<< ours
+  border-color: var(--md-sys-color-outline);
+=======
+  border-color: #000000;
+>>>>>>> theirs
+}
+
+md-filled-tonal-button,
+.mode-tab,
+.bg-toggle-btn,
+.md-input,
+.md-select,
+.collection-name-wrapper .md-input {
+  border-radius: 50px !important;
+}
+
+md-icon-button,
+.card-delete-btn,
+.mode-delete-btn,
+.mode-add-btn {
+  border-radius: 50% !important;
+}
+
+md-filled-tonal-button {
+<<<<<<< ours
+  color: var(--figma-button-label-color);
+  --md-filled-tonal-button-container-color: var(--figma-button-container-color);
+  --md-filled-tonal-button-label-text-color: var(--figma-button-label-color);
+  --md-filled-tonal-button-hover-state-layer-color: var(--figma-button-hover-layer-color);
+  --md-filled-tonal-button-pressed-state-layer-color: var(--figma-button-pressed-layer-color);
+=======
+  --md-filled-tonal-button-container-color: #000000;
+  --md-filled-tonal-button-label-text-color: #ffffff;
+  --md-filled-tonal-button-hover-state-layer-color: rgba(255,255,255,0.12);
+  --md-filled-tonal-button-pressed-state-layer-color: rgba(255,255,255,0.2);
+>>>>>>> theirs
+}
+
+.md-input,
+.md-input-compact,
+.md-select,
+.collection-name-wrapper .md-input,
+.number-input,
+.hex-input {
+<<<<<<< ours
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  caret-color: var(--md-sys-color-on-surface);
+}
+
+:focus-visible {
+  outline: 2px dashed var(--figma-focus-color) !important;
+=======
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+}
+
+:focus-visible {
+  outline: 2px dashed #000000 !important;
+>>>>>>> theirs
+  outline-offset: 2px;
+}
+
+.bg-toggle-btn.active {
+<<<<<<< ours
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+=======
+  background: #000000;
+  color: #ffffff;
+>>>>>>> theirs
 }

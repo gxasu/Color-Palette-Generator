@@ -5,23 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Color Scale Generator</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#5e5e5e" />
+  <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="ColorScale" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<<<<<<< ours
+=======
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+>>>>>>> theirs
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
       <h1 class="app-title">
-        <md-icon class="logo-icon">palette</md-icon>
+        <i data-feather="droplet" class="logo-icon" aria-hidden="true"></i>
         Color Scale Generator
       </h1>
     </div>
@@ -32,19 +31,54 @@
       </div>
       <div class="header-actions">
         <md-filled-tonal-button id="import-btn" title="JSONインポート">
-          <md-icon slot="icon">upload</md-icon>
+          <span slot="icon" class="button-icon-slot" aria-hidden="true">
+            <i data-feather="upload" class="button-icon" aria-hidden="true"></i>
+          </span>
           インポート
         </md-filled-tonal-button>
         <input type="file" id="import-file" accept=".json" hidden />
         <md-filled-tonal-button id="export-btn" title="JSONエクスポート">
-          <md-icon slot="icon">download</md-icon>
+          <span slot="icon" class="button-icon-slot" aria-hidden="true">
+            <i data-feather="download" class="button-icon" aria-hidden="true"></i>
+          </span>
           エクスポート
         </md-filled-tonal-button>
-        <select id="theme-select" class="md-select" title="テーマ" aria-label="テーマ切り替え">
-          <option value="light">ライト</option>
-          <option value="dark">ダーク</option>
-          <option value="system">システム</option>
-        </select>
+        <div class="theme-menu" id="theme-menu">
+          <button
+            type="button"
+            id="theme-trigger"
+            class="header-icon-btn"
+            title="テーマを切り替え"
+            aria-label="テーマを切り替え"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="theme-actions"
+          >
+            <span class="button-icon-slot" id="theme-trigger-icon" aria-hidden="true">
+              <i data-feather="sun" class="button-icon" aria-hidden="true"></i>
+            </span>
+          </button>
+          <div class="panel-dropdown-menu header-dropdown-menu" id="theme-actions" hidden aria-label="テーマ切り替え" role="menu">
+            <button type="button" class="panel-dropdown-item theme-option" data-theme-value="light" role="menuitemradio" aria-checked="false">
+              <span class="panel-dropdown-item-icon" aria-hidden="true">
+                <i data-feather="sun" class="button-icon" aria-hidden="true"></i>
+              </span>
+              <span>ライト</span>
+            </button>
+            <button type="button" class="panel-dropdown-item theme-option" data-theme-value="dark" role="menuitemradio" aria-checked="false">
+              <span class="panel-dropdown-item-icon" aria-hidden="true">
+                <i data-feather="moon" class="button-icon" aria-hidden="true"></i>
+              </span>
+              <span>ダーク</span>
+            </button>
+            <button type="button" class="panel-dropdown-item theme-option" data-theme-value="system" role="menuitemradio" aria-checked="false">
+              <span class="panel-dropdown-item-icon" aria-hidden="true">
+                <i data-feather="monitor" class="button-icon" aria-hidden="true"></i>
+              </span>
+              <span>システム</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -55,14 +89,25 @@
       <div class="panel-header">
         <span class="title-small">パレット一覧</span>
         <div class="panel-header-actions">
-          <md-filled-tonal-button id="add-palette-btn">
-            <md-icon slot="icon">add</md-icon>
-            追加
-          </md-filled-tonal-button>
-          <md-filled-tonal-button id="add-alpha-palette-btn" title="透明度スケールを追加">
-            <md-icon slot="icon">opacity</md-icon>
-            Alpha
-          </md-filled-tonal-button>
+          <div class="panel-add-menu" id="add-palette-menu">
+            <button type="button" id="add-palette-trigger" class="panel-add-btn" title="パレットを追加" aria-label="パレットを追加" aria-haspopup="true" aria-expanded="false" aria-controls="add-palette-actions">
+              <i data-feather="plus" class="button-icon" aria-hidden="true"></i>
+            </button>
+            <div class="panel-dropdown-menu" id="add-palette-actions" hidden aria-label="パレット追加メニュー">
+              <button type="button" id="add-palette-btn" class="panel-dropdown-item">
+                <span class="panel-dropdown-item-icon" aria-hidden="true">
+                  <i data-feather="grid" class="button-icon" aria-hidden="true"></i>
+                </span>
+                <span>通常パレットを追加</span>
+              </button>
+              <button type="button" id="add-alpha-palette-btn" class="panel-dropdown-item">
+                <span class="panel-dropdown-item-icon" aria-hidden="true">
+                  <i data-feather="droplet" class="button-icon" aria-hidden="true"></i>
+                </span>
+                <span>Alpha パレットを追加</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="palette-list" id="palette-cards" role="listbox" aria-label="パレット一覧"></div>
@@ -71,7 +116,7 @@
     <!-- 中央パネル: スウォッチ・チャート・コントラスト -->
     <section class="panel-center" id="panel-center" aria-label="カラースウォッチ・チャート・コントラスト">
       <div class="empty-state">
-        <md-icon class="empty-icon">palette</md-icon>
+        <i data-feather="grid" class="empty-icon" aria-hidden="true"></i>
         <p>パレットを選択するか、新しく作成してください。</p>
       </div>
     </section>
@@ -79,7 +124,7 @@
     <!-- 右パネル: プロパティ -->
     <aside class="panel-right" id="panel-right" aria-label="プロパティ">
       <div class="empty-state">
-        <md-icon class="empty-icon">tune</md-icon>
+        <i data-feather="sliders" class="empty-icon" aria-hidden="true"></i>
         <p>パレットを選択してください。</p>
       </div>
     </aside>
