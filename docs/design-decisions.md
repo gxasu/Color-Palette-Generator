@@ -5,7 +5,6 @@ Interface Design Supervisor が管理する設計判断の記録。
 
 ---
 
-<<<<<<< ours
 ## DDR-033: テーマ切り替えをアイコン起点のドロップダウンへ変更
 
 **日付**: 2026-04-20
@@ -36,8 +35,6 @@ Interface Design Supervisor が管理する設計判断の記録。
 
 ---
 
-=======
->>>>>>> theirs
 ## DDR-021: DESIGN.md を正本として全面採用
 
 **日付**: 2026-04-20

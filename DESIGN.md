@@ -18,10 +18,7 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Vibrant multi-color hero gradients (green, yellow, purple, pink)
 - OpenType `"kern"` feature enabled globally
 - Negative letter-spacing throughout — even body text at -0.14px to -0.26px
-<<<<<<< ours
 - Feather Icons for implementation — 24x24 monochrome outline icons with rounded stroke caps and joins
-=======
->>>>>>> theirs
 
 ## 2. Color Palette & Roles
 
@@ -147,7 +144,6 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - References the selection handles in the Figma editor
 - A meta-design choice connecting website and product
 
-<<<<<<< ours
 ### Iconography
 
 - Use `feather-icons` as the project-standard icon set to approximate Figma's clean outline icon language in production.
@@ -157,8 +153,6 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Prefer outline icons only. Do not mix filled icons into the interface chrome.
 - Recommended semantic set for this product: `droplet`, `grid`, `sliders`, `upload`, `download`, `plus`, `x`.
 
-=======
->>>>>>> theirs
 ## 5. Layout Principles
 
 ### Spacing System
@@ -208,10 +202,7 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Enable `"kern"` feature on all text
 - Use figmaMono in uppercase with positive letter-spacing for labels
 - Apply negative letter-spacing throughout (-0.1px to -1.72px)
-<<<<<<< ours
 - Use Feather outline icons with monochrome `currentColor` strokes
-=======
->>>>>>> theirs
 
 ### Don't
 
@@ -221,10 +212,7 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Don't use solid focus outlines — dashed is the signature
 - Don't increase body font weight above 450 — the light-weight aesthetic is core
 - Don't use positive letter-spacing on body text — it's always negative
-<<<<<<< ours
 - Don't use filled, multicolor, or skeuomorphic icons in the UI chrome
-=======
->>>>>>> theirs
 
 ## 8. Responsive Behavior
 
@@ -254,7 +242,6 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Glass Dark: "rgba(0, 0, 0, 0.08)"
 - Glass Light: "rgba(255, 255, 255, 0.16)"
 
-<<<<<<< ours
 ### Quick Icon Reference
 
 - Default icon system: `feather-icons`
@@ -262,8 +249,6 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 - Color: `currentColor`
 - Preferred icons in this app: `droplet`, `grid`, `sliders`, `upload`, `download`, `plus`, `x`
 
-=======
->>>>>>> theirs
 ### Example Component Prompts
 
 - "Create a hero on a vibrant multi-color gradient (green, yellow, purple, pink). Headline at 86px figmaSans weight 400, line-height 1.0, letter-spacing -1.72px. White text. White pill CTA button (50px radius, 8px 18px padding)."
@@ -278,7 +263,4 @@ What makes Figma distinctive beyond the variable font is its circle-and-pill geo
 3. Dashed focus outlines, not solid
 4. Letter-spacing is always negative on body, always positive on mono labels
 5. Pill (50px) for buttons/tabs, circle (50%) for icon buttons
-<<<<<<< ours
 6. Use Feather outline icons only, with monochrome `currentColor` strokes
-=======
->>>>>>> theirs
