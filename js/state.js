@@ -64,7 +64,7 @@ export function createPalette(baseHex = null) {
   const name = getUniqueName(colorName, existingNames);
   const id = generateId();
 
-  const colors = generatePalette(hex, 11, 0.3);
+  const colors = generatePalette(hex, 11, -0.3);
   const baseIndex = findBaseColorIndex(colors, hex);
 
   const modeId = generateId();
@@ -74,7 +74,7 @@ export function createPalette(baseHex = null) {
     paletteType: 'oklch',
     baseColor: hex,
     colorCount: 11,
-    lightnessCurve: 0.3,
+    lightnessCurve: -0.3,
     lightBg: '#ffffff',
     darkBg: '#1a1a1a',
     baseColorIndex: baseIndex,

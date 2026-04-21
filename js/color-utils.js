@@ -183,10 +183,10 @@ export function contrastRatio(hex1, hex2) {
 }
 
 // Generate lightness values using a curve parameter
-// curve: -1.0 to 1.0 (0.3 default)
+// curve: -1.0 to 1.0 (-0.3 default)
 // Positive values push more values toward lighter end
 // Negative values push toward darker end
-export function generateLightnessValues(count, curve = 0.3) {
+export function generateLightnessValues(count, curve = -0.3) {
   const values = [];
   for (let i = 0; i < count; i++) {
     let t = count === 1 ? 0.5 : i / (count - 1);
@@ -205,7 +205,7 @@ export function generateLightnessValues(count, curve = 0.3) {
 }
 
 // Generate a palette of colors from OKLCH base
-export function generatePalette(baseHex, colorCount, lightnessCurve = 0.3) {
+export function generatePalette(baseHex, colorCount, lightnessCurve = -0.3) {
   const { C, h } = hexToOklch(baseHex);
   const lightnessValues = generateLightnessValues(colorCount, lightnessCurve);
 

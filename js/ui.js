@@ -1,4 +1,6 @@
 // UI Rendering and Interaction
+import feather from 'feather-icons';
+
 import {
   getState,
   subscribe,
@@ -55,6 +57,56 @@ export function initUI() {
   render(getState());
 }
 
+function replaceIcons() {
+  feather.replace({
+    class: 'app-icon',
+    width: 24,
+    height: 24,
+    'stroke-width': 1.75,
+  });
+}
+
+function getThemeIconName(theme) {
+  switch (theme) {
+    case 'dark':
+      return 'moon';
+    case 'system':
+      return 'monitor';
+    case 'light':
+    default:
+      return 'sun';
+  }
+}
+
+function getThemeLabel(theme) {
+  switch (theme) {
+    case 'dark':
+      return 'ダーク';
+    case 'system':
+      return 'システム';
+    case 'light':
+    default:
+      return 'ライト';
+  }
+}
+
+function syncThemeControls(theme) {
+  const trigger = document.getElementById('theme-trigger');
+  const triggerIcon = document.getElementById('theme-trigger-icon');
+  if (trigger && triggerIcon) {
+    const label = getThemeLabel(theme);
+    triggerIcon.innerHTML = `<i data-feather="${getThemeIconName(theme)}" class="button-icon" aria-hidden="true"></i>`;
+    trigger.setAttribute('title', `テーマ: ${label}`);
+    trigger.setAttribute('aria-label', `テーマ: ${label}`);
+  }
+
+  document.querySelectorAll('.theme-option').forEach((option) => {
+    const isActive = option.dataset.themeValue === theme;
+    option.classList.toggle('is-active', isActive);
+    option.setAttribute('aria-checked', String(isActive));
+  });
+}
+
 function setupThemeToggle() {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
   mediaQuery.addEventListener('change', () => {
@@ -65,26 +117,93 @@ function setupThemeToggle() {
 
 function applyTheme(theme) {
   const root = document.documentElement;
+  let resolvedTheme = theme;
   if (theme === 'system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-  } else {
-    root.setAttribute('data-theme', theme);
+    resolvedTheme = prefersDark ? 'dark' : 'light';
+  }
+  root.setAttribute('data-theme', resolvedTheme);
+
+  const themeColor = getComputedStyle(root).getPropertyValue('--figma-theme-color').trim();
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta && themeColor) {
+    themeColorMeta.setAttribute('content', themeColor);
   }
 }
 
 function setupGlobalEvents() {
+  const addPaletteMenu = document.getElementById('add-palette-menu');
+  const addPaletteTrigger = document.getElementById('add-palette-trigger');
+  const addPaletteActions = document.getElementById('add-palette-actions');
+  const themeMenu = document.getElementById('theme-menu');
+  const themeTrigger = document.getElementById('theme-trigger');
+  const themeActions = document.getElementById('theme-actions');
+
+  const closeAddPaletteMenu = () => {
+    addPaletteActions.hidden = true;
+    addPaletteTrigger.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggleAddPaletteMenu = () => {
+    const isOpen = !addPaletteActions.hidden;
+    addPaletteActions.hidden = isOpen;
+    addPaletteTrigger.setAttribute('aria-expanded', String(!isOpen));
+  };
+
+  const closeThemeMenu = () => {
+    themeActions.hidden = true;
+    themeTrigger.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggleThemeMenu = () => {
+    const isOpen = !themeActions.hidden;
+    themeActions.hidden = isOpen;
+    themeTrigger.setAttribute('aria-expanded', String(!isOpen));
+  };
+
+  addPaletteTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeThemeMenu();
+    toggleAddPaletteMenu();
+  });
+
+  themeTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeAddPaletteMenu();
+    toggleThemeMenu();
+  });
+
   document.getElementById('add-palette-btn').addEventListener('click', () => {
     createPalette();
+    closeAddPaletteMenu();
   });
 
   document.getElementById('add-alpha-palette-btn').addEventListener('click', () => {
     createAlphaPalette();
+    closeAddPaletteMenu();
   });
 
-  document.getElementById('theme-select').addEventListener('change', (e) => {
-    setTheme(e.target.value);
-    applyTheme(e.target.value);
+  document.querySelectorAll('.theme-option').forEach((option) => {
+    option.addEventListener('click', () => {
+      setTheme(option.dataset.themeValue);
+      closeThemeMenu();
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!addPaletteMenu.contains(e.target)) {
+      closeAddPaletteMenu();
+    }
+    if (!themeMenu.contains(e.target)) {
+      closeThemeMenu();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAddPaletteMenu();
+      closeThemeMenu();
+    }
   });
 
   document.getElementById('export-btn').addEventListener('click', () => {
@@ -151,6 +270,7 @@ function showSnackbar(message, type = 'info') {
 }
 
 function render(state) {
+  applyTheme(state.theme);
   renderPaletteCards(state);
 
   if (chartDragging) {
@@ -163,7 +283,7 @@ function render(state) {
   if (!sliderDragging && !chartDragging) {
     renderRightPanel(state);
   }
-  document.getElementById('theme-select').value = state.theme;
+  syncThemeControls(state.theme);
   document.getElementById('collection-name').value = state.collectionName;
 
   // Disable export when no palettes (V23)
@@ -173,6 +293,8 @@ function render(state) {
   } else {
     exportBtn.removeAttribute('disabled');
   }
+
+  replaceIcons();
 }
 
 // Lightweight update during chart drag – no DOM rebuild
@@ -338,7 +460,7 @@ function renderPaletteCards(state) {
       <div class="card-header">
         <input class="card-name-input" value="${escapeHtml(palette.name)}" aria-label="パレット名" />
         <md-icon-button class="card-delete-btn" title="パレットを削除" aria-label="パレットを削除">
-          <md-icon>close</md-icon>
+          <i data-feather="x" class="button-icon" aria-hidden="true"></i>
         </md-icon-button>
       </div>
       <div class="card-colors${isAlpha ? ' alpha-card-colors' : ''}">${colorsHtml}</div>
@@ -395,7 +517,7 @@ function renderCenterPanel(state) {
     cleanupChart();
     container.innerHTML = `
       <div class="empty-state">
-        <md-icon class="empty-icon">palette</md-icon>
+        <i data-feather="grid" class="empty-icon" aria-hidden="true"></i>
         <p>パレットを選択するか、新しく作成してください。</p>
       </div>`;
     return;
@@ -481,7 +603,7 @@ function renderRightPanel(state) {
   if (!palette) {
     container.innerHTML = `
       <div class="empty-state">
-        <md-icon class="empty-icon">tune</md-icon>
+        <i data-feather="sliders" class="empty-icon" aria-hidden="true"></i>
         <p>パレットを選択してください。</p>
       </div>`;
     return;
@@ -528,14 +650,20 @@ function renderRightPanel(state) {
         <div class="setting-item">
           <label>ライト背景</label>
           <div class="bg-color-control">
-            <input type="color" id="light-bg-picker" value="${palette.lightBg}" aria-label="ライト背景色ピッカー" />
+            <div class="color-picker-wrapper bg-picker-wrapper">
+              <input type="color" id="light-bg-picker" value="${palette.lightBg}" aria-label="ライト背景色ピッカー" />
+              <div class="color-preview" style="background:${palette.lightBg}"></div>
+            </div>
             <input type="text" id="light-bg-hex" class="hex-input small" value="${palette.lightBg}" aria-label="ライト背景色 HEX 値" />
           </div>
         </div>
         <div class="setting-item">
           <label>ダーク背景</label>
           <div class="bg-color-control">
-            <input type="color" id="dark-bg-picker" value="${palette.darkBg}" aria-label="ダーク背景色ピッカー" />
+            <div class="color-picker-wrapper bg-picker-wrapper">
+              <input type="color" id="dark-bg-picker" value="${palette.darkBg}" aria-label="ダーク背景色ピッカー" />
+              <div class="color-preview" style="background:${palette.darkBg}"></div>
+            </div>
             <input type="text" id="dark-bg-hex" class="hex-input small" value="${palette.darkBg}" aria-label="ダーク背景色 HEX 値" />
           </div>
         </div>
@@ -549,7 +677,7 @@ function renderRightPanel(state) {
       <div class="modes-bar">
         <div class="mode-tabs" id="mode-tabs" role="tablist" aria-label="モード切り替え"></div>
         <md-icon-button class="mode-add-btn" id="add-mode-btn" title="モードを追加" aria-label="モードを追加">
-          <md-icon>add</md-icon>
+          <i data-feather="plus" class="button-icon" aria-hidden="true"></i>
         </md-icon-button>
       </div>
     </div>
@@ -698,7 +826,7 @@ function renderModeTabs(palette) {
 
     tab.innerHTML = `
       <input class="mode-name-input" value="${escapeHtml(mode.name)}" aria-label="モード名" />
-      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除" aria-label="モードを削除">✕</button>' : ''}
+      ${palette.modes.length > 1 ? '<button class="mode-delete-btn" title="モードを削除" aria-label="モードを削除"><i data-feather="x" class="button-icon" aria-hidden="true"></i></button>' : ''}
     `;
 
     tab.addEventListener('click', (e) => {

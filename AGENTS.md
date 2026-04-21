@@ -78,8 +78,8 @@ Task({
 
 | 競合 | 例 | 解決方針 |
 |---|---|---|
-| Design ↔ Engineering | デザイン規範の厳密適用 vs パフォーマンス | a11y を優先。パフォーマンス改善は別手段で対応 |
-| Design ↔ Writing | DESIGN.md の表現規範 vs 用語一貫性 | ユビキタス言語を優先。M3 のラベルは参考にとどめる |
+| Design ↔ Engineering | M3 コンポーネントの a11y 要件 vs パフォーマンス | a11y を優先。パフォーマンス改善は別手段で対応 |
+| Design ↔ Writing | ラベルの M3 セマンティクス vs 用語一貫性 | ユビキタス言語を優先。M3 のラベルは参考にとどめる |
 | Engineering ↔ Writing | エラーメッセージの技術的正確性 vs ユーザーフレンドリーさ | ユーザーフレンドリーを優先。技術詳細はコンソールへ |
 
 ---
@@ -117,7 +117,7 @@ Task({
 
 ```
 Color-Palette-Generator/
-├── CLAUDE.md                          # オーケストレーター指示書（このファイル）
+├── AGENTS.md                          # オーケストレーター指示書（このファイル）
 ├── README.md                          # プロジェクト概要・ユースケース
 ├── docs/
 │   ├── agents/
@@ -162,8 +162,8 @@ Color-Palette-Generator/
 ## コーディング規約
 
 - **言語**: JavaScript (ES Modules), CSS Custom Properties
-- **UI コンポーネント**: 既存の Web Components を使用しつつ `DESIGN.md` の見た目ルールを最優先
-- **CSS**: `DESIGN.md` のカラー/タイポ/フォーカス/角丸ルールを最優先で使用
+- **UI コンポーネント**: `@material/web` の Web Components を優先使用
+- **CSS**: M3 Design Tokens (`--md-sys-color-*`, `--md-sys-shape-*`) を使用
 - **状態更新**: スプレッド演算子による Immutable update のみ
 - **命名**: camelCase (JS), kebab-case (CSS class), UPPER_SNAKE (定数)
 - **UI テキスト**: 日本語。`docs/ubiquitous-language.md` の用語に準拠
@@ -174,7 +174,7 @@ Color-Palette-Generator/
 | レイヤー | 技術 |
 |---|---|
 | Build | Vite 6 |
-| UI | `@material/web`（実装基盤）+ DESIGN.md（デザイン規範） |
+| UI | `@material/web` (Google 公式 M3 Web Components) |
 | State | Custom observable pattern（外部ライブラリなし） |
 | Color | OKLCH color space（自前の数学的変換実装） |
 | Persistence | localStorage |

@@ -46,6 +46,7 @@ Writing Supervisor が管理するプロジェクト共通用語の定義。
 | 用語 (日本語 UI) | 用語 (英語 / コード) | 定義 |
 |---|---|---|
 | テーマ | Theme | アプリの外観テーマ。ライト / ダーク / システム の3択。`data-theme` 属性で制御。 |
+| テーマメニュー | Theme Menu | ヘッダー右端のアイコントリガーから開くドロップダウン。ライト / ダーク / システムを選ぶ。 |
 | ライト背景 | Light Background (`lightBg`) | ライトモードのコントラスト比算出に使用する背景色（デフォルト: `#ffffff`）。 |
 | ダーク背景 | Dark Background (`darkBg`) | ダークモードのコントラスト比算出に使用する背景色（デフォルト: `#1a1a1a`）。 |
 | 背景プレビュー | Background Preview | スウォッチ表示領域の背景切り替え。ライト / ダーク の2択。 |
@@ -73,8 +74,9 @@ Writing Supervisor が管理するプロジェクト共通用語の定義。
 
 | 用語 (日本語 UI) | 用語 (英語 / コード) | 定義 |
 |---|---|---|
-| 追加 | Add (createPalette) | 新しい OKLCH パレットを作成する。 |
-| Alpha | Add Alpha (createAlphaPalette) | 新しい Alpha パレットを作成する。 |
+| 追加メニュー | Add Menu | 左パネル上部の追加ボタンから開くメニュー。作成するパレット種別を選ぶ。 |
+| 通常パレットを追加 | Add Palette (createPalette) | 新しい OKLCH パレットを作成する。 |
+| Alpha パレットを追加 | Add Alpha Palette (createAlphaPalette) | 新しい Alpha パレットを作成する。 |
 | インポート | Import | JSON ファイルからパレットを読み込む。 |
 | エクスポート | Export | パレットを Figma Variables DTCG JSON ファイルとして出力する。 |
 | ライト / ダーク | Light / Dark Preview | スウォッチの背景プレビューを切り替える。 |

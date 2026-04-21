@@ -16,7 +16,7 @@ Figma Variables (DTCG JSON) へのエクスポートに対応し、デザイン�
 - **Figma 連携** — DTCG フォーマットで全モードを単一 JSON にエクスポート。Figma にそのままインポート可能
 - **WCAG コントラスト比** — 各ステップの背景コントラストをリアルタイム表示（AAA / AA / A / Fail）
 - **PWA** — オフライン対応。スマホのホーム画面に追加してネイティブアプリのように使用可能
-- **Material Design 3** — Google の M3 デザインシステムに準拠した UI
+- **Figma Inspired Design System** — `DESIGN.md` 準拠のモノクロUI + 可変タイポグラフィ + pill/circle ジオメトリ
 - **アクセシビリティ** — WCAG 2.1 AA 準拠。ARIA ロール・属性、キーボードナビゲーション、prefers-reduced-motion 対応
 
 ---
@@ -74,7 +74,7 @@ Alpha パレットで白や黒の透明度スケールを作成。
 
 | レイヤー | 技術 |
 |---|---|
-| UI コンポーネント | `@material/web` (Google 公式 M3 Web Components) |
+| UI コンポーネント | `@material/web`（実装基盤） + `DESIGN.md`（スタイル規範） |
 | ビルドツール | Vite 6 |
 | 色空間演算 | OKLCH 自前実装 (sRGB ↔ Linear RGB ↔ XYZ ↔ OKLAB ↔ OKLCH) |
 | 状態管理 | Custom Observable Pattern (Immutable updates) |
@@ -98,7 +98,7 @@ Alpha パレットで白や黒の透明度スケールを作成。
 │   ├── architecture-decisions.md   # Architecture Decision Record (ADR)
 │   └── ubiquitous-language.md      # ユビキタス言語辞書
 ├── index.html                      # エントリーポイント
-├── css/styles.css                  # M3 トークンベースのスタイル
+├── css/styles.css                  # DESIGN.md 準拠スタイル
 ├── js/
 │   ├── app.js                      # アプリ初期化
 │   ├── state.js                    # 状態管理
@@ -129,6 +129,7 @@ npm run preview   # ビルド結果のプレビュー
 
 ## ドキュメント
 
+- [Design System](DESIGN.md) — Figma Inspired デザインシステムの正本
 - [Design Decision Record](docs/design-decisions.md) — UI / UX の設計判断
 - [Architecture Decision Record](docs/architecture-decisions.md) — 技術アーキテクチャの判断
 - [ユビキタス言語辞書](docs/ubiquitous-language.md) — プロジェクト共通用語の定義
